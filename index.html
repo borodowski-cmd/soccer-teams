@@ -301,6 +301,19 @@ textarea.darea{width:100%;height:90px;font-family:monospace;font-size:12px;paddi
 .ta-btn.white-on{background:#f5f0e8;border-color:#c8b97a;color:#1a1a1a;}
 .ta-lbl{font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;text-align:center;margin-top:1px;}
 
+/* ── SETTINGS SECTIONS ── */
+.settings-section{background:var(--surface);border-radius:var(--r);margin-bottom:14px;overflow:hidden;box-shadow:var(--shadow);}
+.settings-hdr{padding:14px 16px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.settings-hdr h2{font-size:15px;font-weight:700;color:var(--text);}
+.settings-hdr p{font-size:12px;color:var(--text3);margin-top:2px;}
+.settings-body{padding:14px 16px;}
+.frow{display:flex;flex-direction:column;gap:4px;margin-bottom:12px;}
+.frow label{font-size:12px;font-weight:600;color:var(--text2);}
+.frow input[type=text]{padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:14px;color:var(--text);background:var(--surface2);outline:none;}
+.frow input[type=text]:focus{border-color:var(--green);}
+.info-note{background:var(--green-light);border:1px solid #a8d5b8;border-radius:var(--r-sm);padding:10px 13px;font-size:12.5px;color:var(--green-dark);line-height:1.6;}
+.btn-sm{font-size:12px;padding:7px 12px;}
+
 /* ── DESKTOP UPGRADES ── */
 @media(min-width:600px){
   .plist{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
@@ -325,11 +338,12 @@ textarea.darea{width:100%;height:90px;font-family:monospace;font-size:12px;paddi
   <div class="hdr-icon">⚽</div>
   <div class="hdr-titles">
     <h1>Team Builder</h1>
-    <p>Build balanced soccer teams</p>
+    <p id="hdr-sub">Build balanced soccer teams</p>
   </div>
   <div class="hdr-right">
     <span id="saved-badge">✓ Saved</span>
-    <button class="hdr-btn" onclick="resetRoster()">↺ Reset</button>
+    <button class="hdr-btn" onclick="showTab('settings')">⚙️</button>
+    <button class="hdr-btn" id="sync-btn" onclick="syncFromGitHub()" title="Reload roster from GitHub">↻ Sync</button>
   </div>
 </header>
 
@@ -368,8 +382,8 @@ textarea.darea{width:100%;height:90px;font-family:monospace;font-size:12px;paddi
   <div class="panel" id="panel-roster">
     <div class="rtoolbar">
       <button class="btn btn-p" onclick="openModal()">＋ Add Player</button>
-      <button class="btn btn-s btn-sm" onclick="exportCSV()">↓ CSV</button>
-      <button class="btn btn-s btn-sm" onclick="toggleImport()">↑ Import</button>
+      <button class="btn btn-s btn-sm" onclick="exportCSV()" title="Download roster.csv to commit to GitHub">↓ roster.csv</button>
+      <button class="btn btn-s btn-sm" onclick="toggleImport()">↑ Import CSV</button>
     </div>
     <div class="csv-box" id="csv-box">
       <textarea class="darea" id="csv-paste" placeholder="Name,Forward,Midfield,Defense,TeamPlayer,Stamina,GK_Skill,GK_Willingness&#10;Carlos,8,7,6,7,8,6,7"></textarea>
@@ -380,6 +394,47 @@ textarea.darea{width:100%;height:90px;font-family:monospace;font-size:12px;paddi
 
   <!-- Settings -->
   <div class="panel" id="panel-settings">
+
+    <!-- GitHub CSV Source -->
+    <div class="settings-section">
+      <div class="settings-hdr">
+        <div>
+          <h2>🔗 GitHub Roster Source</h2>
+          <p>Auto-load roster.csv from your GitHub repo</p>
+        </div>
+      </div>
+      <div class="settings-body">
+        <div class="frow">
+          <label>GitHub Username</label>
+          <input type="text" id="gh-user" placeholder="e.g. myusername" oninput="saveGhConfig()"/>
+        </div>
+        <div class="frow">
+          <label>Repository Name</label>
+          <input type="text" id="gh-repo" placeholder="e.g. soccer-teams" oninput="saveGhConfig()"/>
+        </div>
+        <div class="frow">
+          <label>Branch (default: main)</label>
+          <input type="text" id="gh-branch" placeholder="main" oninput="saveGhConfig()"/>
+        </div>
+        <div class="frow">
+          <label>CSV file path (default: roster.csv)</label>
+          <input type="text" id="gh-path" placeholder="roster.csv" oninput="saveGhConfig()"/>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
+          <button class="btn btn-p btn-sm" onclick="syncFromGitHub()">↻ Load from GitHub now</button>
+          <button class="btn btn-s btn-sm" onclick="exportCSV()">↓ Export current roster.csv</button>
+          <button class="btn btn-s btn-sm" onclick="resetRoster()" style="color:var(--red);">↺ Reset to defaults</button>
+        </div>
+        <div class="info-note" style="margin-top:12px;">
+          💡 <b>How to update the shared roster:</b><br>
+          1. Make changes in the Roster tab<br>
+          2. Click <b>↓ Export current roster.csv</b><br>
+          3. Commit that file to your GitHub repo<br>
+          4. Everyone sees the changes next time they open the app or tap <b>↻ Sync</b>
+        </div>
+        <div id="gh-status" style="margin-top:10px;display:none;"></div>
+      </div>
+    </div>
     <div class="settings-section">
       <div class="settings-hdr">
         <div>
@@ -944,37 +999,150 @@ function delPlayer(i){
   selected=ns;save();renderList();renderRoster();
 }
 
-// ── CSV ───────────────────────────────────────────────────────────────
+// ── GitHub CSV Sync ───────────────────────────────────────────────────
+const GH_KEY='soccerGhConfig_v1';
+
+function saveGhConfig(){
+  const cfg=getGhConfig();
+  try{localStorage.setItem(GH_KEY,JSON.stringify(cfg));}catch(e){}
+}
+function getGhConfig(){
+  return{
+    user:(document.getElementById('gh-user').value||'').trim(),
+    repo:(document.getElementById('gh-repo').value||'').trim(),
+    branch:(document.getElementById('gh-branch').value||'main').trim()||'main',
+    path:(document.getElementById('gh-path').value||'roster.csv').trim()||'roster.csv',
+  };
+}
+function loadGhConfig(){
+  try{
+    const r=localStorage.getItem(GH_KEY);
+    if(r){
+      const cfg=JSON.parse(r);
+      document.getElementById('gh-user').value=cfg.user||'';
+      document.getElementById('gh-repo').value=cfg.repo||'';
+      document.getElementById('gh-branch').value=cfg.branch||'main';
+      document.getElementById('gh-path').value=cfg.path||'roster.csv';
+    }
+  }catch(e){}
+}
+function ghStatusMsg(msg,isErr){
+  const el=document.getElementById('gh-status');
+  if(!el)return;
+  el.style.display='block';
+  el.style.background=isErr?'var(--red-light)':'var(--green-light)';
+  el.style.border='1px solid '+(isErr?'#f5c6c2':'#a8d5b8');
+  el.style.color=isErr?'var(--red)':'var(--green-dark)';
+  el.style.padding='10px 13px';
+  el.style.borderRadius='var(--r-sm)';
+  el.style.fontSize='13px';
+  el.textContent=msg;
+}
+async function syncFromGitHub(){
+  const cfg=getGhConfig();
+  const btn=document.getElementById('sync-btn');
+  const sub=document.getElementById('hdr-sub');
+  if(!cfg.user||!cfg.repo){
+    showTab('settings');
+    ghStatusMsg('⚠ Enter your GitHub username and repository name first.',true);
+    return;
+  }
+  const url=`https://raw.githubusercontent.com/${cfg.user}/${cfg.repo}/${cfg.branch}/${cfg.path}?_=${Date.now()}`;
+  if(btn){btn.textContent='⟳…';btn.disabled=true;}
+  sub.textContent='Syncing roster…';
+  try{
+    const res=await fetch(url);
+    if(!res.ok)throw new Error(`HTTP ${res.status} — check username, repo, and file path in Settings`);
+    const text=await res.text();
+    const players=parseCSVText(text);
+    if(!players.length)throw new Error('CSV has 0 valid rows — check file format.');
+    PLAYERS=players;
+    selected=new Set();teamAssign={};
+    try{localStorage.setItem(KEY,JSON.stringify(PLAYERS));}catch(e){}
+    sub.textContent=`✓ ${PLAYERS.length} players · from GitHub`;
+    ghStatusMsg(`✓ Loaded ${PLAYERS.length} players from ${cfg.user}/${cfg.repo}/${cfg.path}`,false);
+    renderList();renderRoster();
+    document.getElementById('nb-roster').textContent=PLAYERS.length;
+  }catch(err){
+    sub.textContent='⚠ Sync failed · using local data';
+    ghStatusMsg('✗ '+err.message,true);
+  }finally{
+    if(btn){btn.textContent='↻ Sync';btn.disabled=false;}
+  }
+}
+
+function parseCSVText(raw){
+  const lines=raw.split('\n').filter(l=>l.trim());
+  if(!lines.length)return[];
+  const start=lines[0].toLowerCase().includes('name')?1:0;
+  const players=[];
+  lines.slice(start).forEach(line=>{
+    const c=line.split(',').map(x=>x.trim());
+    if(c.length<6||!c[0])return;
+    players.push({name:c[0],F:+c[1]||5,M:+c[2]||5,B:+c[3]||5,TP:+c[4]||5,S:+c[5]||5,GK:+c[6]||5,GKW:+c[7]||5});
+  });
+  return players;
+}
+
+// ── Persistence ───────────────────────────────────────────────────────
+function save(){
+  try{localStorage.setItem(KEY,JSON.stringify(PLAYERS));flashSaved();}catch(e){}
+}
+function load(){
+  try{
+    const r=localStorage.getItem(KEY);
+    if(r){const p=JSON.parse(r);if(Array.isArray(p)&&p.length){
+      PLAYERS=p.map(x=>({...x,S:x.S??x.STA??7,GK:x.GK??5,GKW:x.GKW??5}));return;
+    }}
+  }catch(e){}
+  PLAYERS=DEFAULTS.map(p=>({...p}));
+}
+function resetRoster(){
+  if(!confirm('Reset to the built-in default roster? All local edits will be lost.'))return;
+  localStorage.removeItem(KEY);location.reload();
+}
+function flashSaved(){
+  const b=document.getElementById('saved-badge');
+  b.style.opacity='1';clearTimeout(b._t);
+  b._t=setTimeout(()=>b.style.opacity='0',2000);
+}
+
+// ── CSV export / import ───────────────────────────────────────────────
 function exportCSV(){
   let csv='Name,Forward,Midfield,Defense,TeamPlayer,Stamina,GK_Skill,GK_Willingness\n';
   PLAYERS.forEach(p=>{csv+=`${p.name},${p.F},${p.M},${p.B},${p.TP},${p.S},${p.GK},${p.GKW}\n`;});
   const a=document.createElement('a');
   a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
-  a.download='soccer_roster.csv';a.click();
+  a.download='roster.csv';a.click();
 }
 function importCSV(){
   const raw=document.getElementById('csv-paste').value.trim();
   if(!raw)return;
-  const lines=raw.split('\n').filter(l=>l.trim());
-  const start=lines[0].toLowerCase().includes('name')?1:0;
-  let n=0;
-  lines.slice(start).forEach(line=>{
-    const c=line.split(',').map(x=>x.trim());
-    if(c.length<6||!c[0])return;
-    PLAYERS.push({name:c[0],F:+c[1]||5,M:+c[2]||5,B:+c[3]||5,TP:+c[4]||5,S:+c[5]||5,GK:+c[6]||5,GKW:+c[7]||5});n++;
-  });
-  alert(`Imported ${n} player${n===1?'':'s'}.`);
+  const players=parseCSVText(raw);
+  if(!players.length){alert('No valid rows found. Expected format:\nName,Forward,Midfield,Defense,TeamPlayer,Stamina,GK_Skill,GK_Willingness');return;}
+  const replace=confirm(`Import ${players.length} players.\n\nOK = Replace entire roster\nCancel = Append to current roster`);
+  if(replace){PLAYERS=players;selected=new Set();teamAssign={};}
+  else PLAYERS.push(...players);
   document.getElementById('csv-paste').value='';
   document.getElementById('csv-box').style.display='none';
   save();renderList();renderRoster();
 }
+function toggleImport(){const b=document.getElementById('csv-box');b.style.display=b.style.display==='block'?'none':'block';}
 
 // ── Init ──────────────────────────────────────────────────────────────
 load();
 loadWeights();
+loadGhConfig();
 document.getElementById('nb-roster').textContent=PLAYERS.length;
 applyWeightsToUI();
 renderList();
+
+// Auto-sync from GitHub on load if configured
+(async()=>{
+  const cfg=getGhConfig();
+  if(cfg.user&&cfg.repo)await syncFromGitHub();
+})();
+
 </script>
 </body>
 </html>
