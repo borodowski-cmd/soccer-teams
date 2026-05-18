@@ -289,6 +289,18 @@ textarea.darea{width:100%;height:90px;font-family:monospace;font-size:12px;paddi
 .preset-btn.active-preset{background:var(--green-light);border-color:var(--green);color:var(--green-dark);}
 .info-note{font-size:12px;color:var(--text3);background:var(--surface2);border-radius:var(--r-sm);padding:10px 13px;margin-top:12px;line-height:1.5;}
 
+/* ── TEAM PRE-ASSIGN ── */
+.team-assign{display:flex;gap:4px;align-items:center;}
+.ta-btn{
+  width:28px;height:28px;border-radius:50%;border:2px solid var(--border);
+  background:var(--surface2);font-size:13px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;flex-shrink:0;font-weight:700;line-height:1;
+}
+.ta-btn.black-on{background:#1a1a1a;border-color:#1a1a1a;color:#fff;}
+.ta-btn.white-on{background:#f5f0e8;border-color:#c8b97a;color:#1a1a1a;}
+.ta-lbl{font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;text-align:center;margin-top:1px;}
+
 /* ── DESKTOP UPGRADES ── */
 @media(min-width:600px){
   .plist{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
@@ -340,6 +352,7 @@ textarea.darea{width:100%;height:90px;font-family:monospace;font-size:12px;paddi
       <input type="text" id="search" placeholder="Search player…" oninput="renderList()" autocomplete="off" autocorrect="off" autocapitalize="none"/>
     </div>
     <div class="warn" id="warn"></div>
+    <div class="warn" id="assign-info" style="display:none;margin-bottom:8px;"></div>
     <div class="plist" id="plist"></div>
     <div class="gen-sticky">
       <button class="gen-btn" id="gen-btn" disabled onclick="generate()">⚡ Generate Balanced Teams</button>
@@ -549,7 +562,8 @@ const DEFAULTS=[
 
 const KEY='soccerBuilder_v4';
 const WKEY='soccerWeights_v2';
-let PLAYERS=[],selected=new Set(),gameSize=12,editIdx=null;
+let PLAYERS=[],selected=new Set(),teamAssign={},gameSize=12,editIdx=null;
+// teamAssign: { playerIndex: 'B' | 'W' }  (B=Black, W=White, undefined=auto)
 
 // ── Weights ───────────────────────────────────────────────────────────
 const DEFAULT_WEIGHTS={avg:25,F:13,M:13,B:13,TP:13,S:13,GK:10};
@@ -664,6 +678,16 @@ function renderList(){
   document.getElementById('plist').innerHTML=PLAYERS.map((p,i)=>{
     if(q&&!p.name.toLowerCase().includes(q))return'';
     const s=selected.has(i),r=role(p),rc=RC[r];
+    const ta=teamAssign[i]; // 'B', 'W', or undefined
+    const assignHtml=s?`
+      <div class="team-assign" onclick="event.stopPropagation()">
+        <div>
+          <div class="ta-btn${ta==='B'?' black-on':''}" onclick="setTeam(${i},'B')" title="Assign to Black">⚫</div>
+        </div>
+        <div>
+          <div class="ta-btn${ta==='W'?' white-on':''}" onclick="setTeam(${i},'W')" title="Assign to White">⚪</div>
+        </div>
+      </div>`:'';
     return`<div class="prow${s?' sel':''}" onclick="toggle(${i})">
       <div class="pcheck">${s?'✓':''}</div>
       <div class="pinfo">
@@ -679,6 +703,7 @@ function renderList(){
         </div>
       </div>
       <div class="pright">
+        ${assignHtml}
         <span class="avg-pill">${avg(p).toFixed(1)}</span>
         <span class="role-pill" style="background:${rc.bg};color:${rc.c}">${RL[r]}</span>
         <div class="row-acts" onclick="event.stopPropagation()">
@@ -694,9 +719,37 @@ function renderList(){
   nb.textContent=n;nb.className='nbadge'+(n?'':' zero');
   document.getElementById('gen-btn').disabled=(n!==gameSize||Object.values(W).reduce((a,v)=>a+v,0)!==100);
   checkWarn();
+  updateAssignCounts();
 }
 
-function toggle(i){selected.has(i)?selected.delete(i):selected.add(i);renderList();}
+function toggle(i){
+  if(selected.has(i)){selected.delete(i);delete teamAssign[i];}
+  else selected.add(i);
+  renderList();
+}
+function setTeam(i,team){
+  // clicking same button again clears the assignment
+  if(teamAssign[i]===team)delete teamAssign[i];
+  else teamAssign[i]=team;
+  renderList();
+}
+function updateAssignCounts(){
+  const bCount=Object.values(teamAssign).filter(v=>v==='B').length;
+  const wCount=Object.values(teamAssign).filter(v=>v==='W').length;
+  const half=gameSize/2;
+  const el=document.getElementById('assign-info');
+  if(!el)return;
+  if(bCount===0&&wCount===0){el.style.display='none';return;}
+  el.style.display='block';
+  const issues=[];
+  if(bCount>half)issues.push(`Too many on ⚫ Black (${bCount}/${half})`);
+  if(wCount>half)issues.push(`Too many on ⚪ White (${wCount}/${half})`);
+  el.style.background=issues.length?'var(--red-light)':'var(--amber-light)';
+  el.style.borderColor=issues.length?'#f5c6c2':'#f0c070';
+  el.style.color=issues.length?'var(--red)':'var(--amber)';
+  el.textContent=issues.length?'⚠ '+issues.join(' · '):`⚫ Black: ${bCount} fixed · ⚪ White: ${wCount} fixed · ${gameSize-bCount-wCount} auto`;
+}
+
 function onSizeChange(){gameSize=+document.getElementById('size-sel').value;renderList();}
 
 function checkWarn(){
@@ -729,10 +782,28 @@ function combos(arr,k){
   h(0,[]);return res;
 }
 function generate(){
-  const players=[...selected].map(i=>PLAYERS[i]),half=players.length/2;
+  const players=[...selected].map(i=>({...PLAYERS[i],_idx:i}));
+  const half=players.length/2;
+
+  // Split into fixed and free players
+  const fixedBlack=players.filter(p=>teamAssign[p._idx]==='B');
+  const fixedWhite=players.filter(p=>teamAssign[p._idx]==='W');
+  const free=players.filter(p=>!teamAssign[p._idx]);
+
+  // Validate constraints
+  if(fixedBlack.length>half||fixedWhite.length>half){
+    alert(`Too many players pre-assigned to one team!\nMax per team: ${half}`);return;
+  }
+
+  const needBlack=half-fixedBlack.length;
+  const needWhite=half-fixedWhite.length;
+
   let bT1=[],bT2=[],bS=999;
-  for(const t1 of combos(players,half)){
-    const t2=players.filter(p=>!t1.includes(p)),s=score(t1,t2);
+  // Find the best combination of free players to fill remaining spots
+  for(const extra of combos(free,needBlack)){
+    const t1=[...fixedBlack,...extra];
+    const t2=[...fixedWhite,...free.filter(p=>!extra.includes(p))];
+    const s=score(t1,t2);
     if(s<bS){bS=s;bT1=[...t1];bT2=[...t2];}
     if(bS<.03)break;
   }
@@ -782,8 +853,9 @@ function renderTeams(t1,t2){
       if(!by[r].length)return;
       h+=`<div class="pos-hdr">${lbl} (${by[r].length})</div>`;
       by[r].sort((a,b)=>b[r]-a[r]).forEach(p=>{
+        const locked=p._idx!==undefined&&teamAssign[p._idx]?'<span style="font-size:10px;opacity:.6;margin-left:4px;" title="Pre-assigned">🔒</span>':'';
         h+=`<div class="tprow">
-          <div><div class="tpname">${p.name}</div><div class="tpstats">F${p.F} M${p.M} D${p.B} TP${p.TP} ⚡${p.S} 🧤${p.GK}/${p.GKW}</div></div>
+          <div><div class="tpname">${p.name}${locked}</div><div class="tpstats">F${p.F} M${p.M} D${p.B} TP${p.TP} ⚡${p.S} 🧤${p.GK}/${p.GKW}</div></div>
           <div class="tpavg">${avg(p).toFixed(1)}</div>
         </div>`;
       });
