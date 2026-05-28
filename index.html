@@ -810,32 +810,80 @@ function onSizeChange(){gameSize=+document.getElementById('size-sel').value;rend
 function checkWarn(){
   if(selected.size!==gameSize){document.getElementById('warn').style.display='none';return;}
   const roles=[...selected].map(i=>role(PLAYERS[i]));
+  const cnt={F:roles.filter(r=>r==='F').length,M:roles.filter(r=>r==='M').length,B:roles.filter(r=>r==='B').length};
+  const half=gameSize/2;
   const issues=[];
-  if(roles.filter(r=>r==='F').length<2)issues.push('few forwards');
-  if(roles.filter(r=>r==='M').length<2)issues.push('few midfielders');
-  if(roles.filter(r=>r==='B').length<2)issues.push('few defenders');
+  // Each team needs at least 1 of each role — so pool needs at least 2
+  if(cnt.F<2)issues.push(`only ${cnt.F} forward${cnt.F===1?'':'s'}`);
+  if(cnt.M<2)issues.push(`only ${cnt.M} midfielder${cnt.M===1?'':'s'}`);
+  if(cnt.B<2)issues.push(`only ${cnt.B} defender${cnt.B===1?'':'s'}`);
   const w=document.getElementById('warn');
-  if(issues.length){w.style.display='block';w.textContent='⚠ '+issues.join(', ')+' — positional coverage may be uneven.';}
+  if(issues.length){w.style.display='block';w.textContent='⚠ '+issues.join(', ')+' — each team may lack a position.';}
   else w.style.display='none';
 }
 
 // ── Team generation ───────────────────────────────────────────────────
-function score(t1,t2){
-  const d=k=>Math.abs(tPos(t1,k)-tPos(t2,k));
-  const total=Object.values(W).reduce((a,v)=>a+v,0)||100;
-  return (Math.abs(tAvg(t1)-tAvg(t2))*(W.avg/total))
-       + (d('F') *(W.F /total))
-       + (d('M') *(W.M /total))
-       + (d('B') *(W.B /total))
-       + (d('TP')*(W.TP/total))
-       + (d('S') *(W.S /total))
-       + (d('GK')*(W.GK/total));
+
+// Returns a breakdown of role counts for a team
+function roleCounts(team){
+  const c={F:0,M:0,B:0};
+  team.forEach(p=>c[role(p)]++);
+  return c;
 }
+
+// Core scoring function — lower is better
+// Priority (hard-coded, not affected by sliders):
+//   1. Positional coverage penalty (missing F/M/B roles = huge cost)
+//   2. Role count balance between teams
+//   3. Stamina balance
+//   4. Overall average balance
+//   5. Individual skill balance (uses W sliders as tie-breakers)
+function score(t1,t2){
+  const r1=roleCounts(t1), r2=roleCounts(t2);
+  const half=t1.length; // each team size
+
+  // 1. Hard penalty for missing role coverage (each team needs at least 1 of each)
+  // Scale: penalty >> any realistic balance difference
+  let coveragePenalty=0;
+  ['F','M','B'].forEach(r=>{
+    if(r1[r]===0) coveragePenalty+=50;
+    if(r2[r]===0) coveragePenalty+=50;
+  });
+
+  // 2. Role count balance — penalise difference in # of forwards, mids, defenders
+  // Weight: high (10x avg diff)
+  const roleBalance =
+    Math.abs(r1.F-r2.F)*3.0 +
+    Math.abs(r1.M-r2.M)*3.0 +
+    Math.abs(r1.B-r2.B)*3.0;
+
+  // 3. Stamina balance — total stamina diff normalised by team size
+  const stamDiff=Math.abs(
+    t1.reduce((a,p)=>a+p.S,0)/t1.length -
+    t2.reduce((a,p)=>a+p.S,0)/t2.length
+  )*2.5;
+
+  // 4. Overall average balance
+  const avgDiff=Math.abs(tAvg(t1)-tAvg(t2))*2.0;
+
+  // 5. Skill balance (tie-breaker using W sliders, normalised to 0–1 range)
+  const total=Object.values(W).reduce((a,v)=>a+v,0)||100;
+  const skillBalance=
+    (Math.abs(tPos(t1,'F') -tPos(t2,'F')) *(W.F /total))
+   +(Math.abs(tPos(t1,'M') -tPos(t2,'M')) *(W.M /total))
+   +(Math.abs(tPos(t1,'B') -tPos(t2,'B')) *(W.B /total))
+   +(Math.abs(tPos(t1,'TP')-tPos(t2,'TP'))*(W.TP/total))
+   +(Math.abs(tPos(t1,'GK')-tPos(t2,'GK'))*(W.GK/total));
+
+  return coveragePenalty + roleBalance + stamDiff + avgDiff + skillBalance;
+}
+
 function combos(arr,k){
   const res=[];
   function h(s,c){if(c.length===k){res.push([...c]);return;}for(let i=s;i<arr.length;i++){c.push(arr[i]);h(i+1,c);c.pop();}}
   h(0,[]);return res;
 }
+
 function generate(){
   const players=[...selected].map(i=>({...PLAYERS[i],_idx:i}));
   const half=players.length/2;
@@ -851,36 +899,44 @@ function generate(){
   }
 
   const needBlack=half-fixedBlack.length;
-  const needWhite=half-fixedWhite.length;
 
-  let bT1=[],bT2=[],bS=999;
-  // Find the best combination of free players to fill remaining spots
+  let bT1=[],bT2=[],bS=Infinity;
   for(const extra of combos(free,needBlack)){
     const t1=[...fixedBlack,...extra];
     const t2=[...fixedWhite,...free.filter(p=>!extra.includes(p))];
     const s=score(t1,t2);
     if(s<bS){bS=s;bT1=[...t1];bT2=[...t2];}
-    if(bS<.03)break;
+    if(bS<0.05)break;  // good enough — stop early
   }
   renderTeams(bT1,bT2);showTab('teams');
 }
 
 function renderTeams(t1,t2){
   const s1=tAvg(t1),s2=tAvg(t2),diff=Math.abs(s1-s2);
+  const r1=roleCounts(t1),r2=roleCounts(t2);
+
+  // Balance bars — positional counts first, then averages
   const metrics=[
-    {l:'Overall', v1:s1,            v2:s2},
-    {l:'Forward', v1:tPos(t1,'F'),  v2:tPos(t2,'F')},
-    {l:'Midfield',v1:tPos(t1,'M'),  v2:tPos(t2,'M')},
-    {l:'Defense', v1:tPos(t1,'B'),  v2:tPos(t2,'B')},
-    {l:'Team Pl.',v1:tPos(t1,'TP'), v2:tPos(t2,'TP')},
-    {l:'Stamina', v1:tPos(t1,'S'),  v2:tPos(t2,'S')},
-    {l:'🧤 GK',   v1:tPos(t1,'GK'), v2:tPos(t2,'GK')},
+    {l:'⚔️ Forwards',  v1:r1.F,           v2:r2.F,           isCount:true},
+    {l:'🔄 Midfielders',v1:r1.M,           v2:r2.M,           isCount:true},
+    {l:'🛡 Defenders',  v1:r1.B,           v2:r2.B,           isCount:true},
+    {l:'⚡ Stamina',    v1:tPos(t1,'S'),   v2:tPos(t2,'S'),   isCount:false},
+    {l:'📊 Overall',   v1:s1,             v2:s2,             isCount:false},
+    {l:'🤝 Team Play', v1:tPos(t1,'TP'),  v2:tPos(t2,'TP'),  isCount:false},
+    {l:'🧤 GK',        v1:tPos(t1,'GK'),  v2:tPos(t2,'GK'),  isCount:false},
   ];
-  const bars=metrics.map(m=>{const d=Math.abs(m.v1-m.v2);return`
-    <div class="bal-row">
+  const bars=metrics.map(m=>{
+    const d=Math.abs(m.v1-m.v2);
+    // For counts: difference of 0 = green, 1 = amber, 2+ = red
+    // For averages: same bc() thresholds as before
+    const colour=m.isCount?(d===0?'#1D9E75':d===1?'#d4860b':'#c0392b'):bc(d);
+    const barW=m.isCount
+      ? (d===0?'5%':d===1?'40%':'85%')  // count diff visual
+      : pct(d);
+    return`<div class="bal-row">
       <div class="bal-lbl">${m.l}</div>
-      <div class="bar-wrap"><div class="bar-fill" style="width:${pct(d)};background:${bc(d)}"></div></div>
-      <div class="bal-sc">${m.v1.toFixed(1)} · ${m.v2.toFixed(1)}</div>
+      <div class="bar-wrap"><div class="bar-fill" style="width:${barW};background:${colour}"></div></div>
+      <div class="bal-sc">${m.isCount?m.v1+'·'+m.v2:m.v1.toFixed(1)+' · '+m.v2.toFixed(1)}</div>
     </div>`;}).join('');
 
   function gkSection(team){
