@@ -824,90 +824,104 @@ function checkWarn(){
 
 // ── Team generation ───────────────────────────────────────────────────
 
-// Returns a breakdown of role counts for a team
 function roleCounts(team){
   const c={F:0,M:0,B:0};
   team.forEach(p=>c[role(p)]++);
   return c;
 }
 
-// Core scoring function — lower is better
-// Priority (hard-coded, not affected by sliders):
-//   1. Positional coverage penalty (missing F/M/B roles = huge cost)
-//   2. Role count balance between teams
-//   3. Stamina balance
-//   4. Overall average balance
-//   5. Individual skill balance (uses W sliders as tie-breakers)
+// Secondary score: used only to compare splits with equal role counts
+// Lower = better balanced
 function score(t1,t2){
-  const r1=roleCounts(t1), r2=roleCounts(t2);
-  const half=t1.length; // each team size
-
-  // 1. Hard penalty for missing role coverage (each team needs at least 1 of each)
-  // Scale: penalty >> any realistic balance difference
-  let coveragePenalty=0;
-  ['F','M','B'].forEach(r=>{
-    if(r1[r]===0) coveragePenalty+=50;
-    if(r2[r]===0) coveragePenalty+=50;
-  });
-
-  // 2. Role count balance — penalise difference in # of forwards, mids, defenders
-  // Weight: high (10x avg diff)
-  const roleBalance =
-    Math.abs(r1.F-r2.F)*3.0 +
-    Math.abs(r1.M-r2.M)*3.0 +
-    Math.abs(r1.B-r2.B)*3.0;
-
-  // 3. Stamina balance — total stamina diff normalised by team size
-  const stamDiff=Math.abs(
+  const stamDiff = Math.abs(
     t1.reduce((a,p)=>a+p.S,0)/t1.length -
     t2.reduce((a,p)=>a+p.S,0)/t2.length
-  )*2.5;
-
-  // 4. Overall average balance
-  const avgDiff=Math.abs(tAvg(t1)-tAvg(t2))*2.0;
-
-  // 5. Skill balance (tie-breaker using W sliders, normalised to 0–1 range)
+  );
+  const avgDiff = Math.abs(tAvg(t1)-tAvg(t2));
   const total=Object.values(W).reduce((a,v)=>a+v,0)||100;
-  const skillBalance=
+  const skillBalance =
     (Math.abs(tPos(t1,'F') -tPos(t2,'F')) *(W.F /total))
    +(Math.abs(tPos(t1,'M') -tPos(t2,'M')) *(W.M /total))
    +(Math.abs(tPos(t1,'B') -tPos(t2,'B')) *(W.B /total))
    +(Math.abs(tPos(t1,'TP')-tPos(t2,'TP'))*(W.TP/total))
    +(Math.abs(tPos(t1,'GK')-tPos(t2,'GK'))*(W.GK/total));
-
-  return coveragePenalty + roleBalance + stamDiff + avgDiff + skillBalance;
+  // Stamina and avg weighted highest; skills as tiebreaker
+  return stamDiff*2.5 + avgDiff*2.0 + skillBalance;
 }
 
 function combos(arr,k){
   const res=[];
-  function h(s,c){if(c.length===k){res.push([...c]);return;}for(let i=s;i<arr.length;i++){c.push(arr[i]);h(i+1,c);c.pop();}}
+  function h(s,c){
+    if(c.length===k){res.push([...c]);return;}
+    for(let i=s;i<arr.length;i++){c.push(arr[i]);h(i+1,c);c.pop();}
+  }
   h(0,[]);return res;
+}
+
+// Split a group of same-role players as evenly as possible (skill-balanced)
+function splitGroup(players){
+  // Try all combos of ceil(n/2) and pick most balanced by avg
+  const n=players.length, half=Math.floor(n/2);
+  if(n===0)return{a:[],b:[]};
+  if(n===1)return{a:players,b:[]};
+  let bA=players.slice(0,half),bB=players.slice(half),bS=Infinity;
+  for(const a of combos(players,half)){
+    const b=players.filter(p=>!a.includes(p));
+    const s=Math.abs(
+      a.reduce((sum,p)=>sum+avg(p),0)/a.length -
+      b.reduce((sum,p)=>sum+avg(p),0)/b.length
+    ) + Math.abs(
+      a.reduce((sum,p)=>sum+p.S,0)/a.length -
+      b.reduce((sum,p)=>sum+p.S,0)/b.length
+    );
+    if(s<bS){bS=s;bA=[...a];bB=[...b];}
+  }
+  return{a:bA,b:bB};
 }
 
 function generate(){
   const players=[...selected].map(i=>({...PLAYERS[i],_idx:i}));
   const half=players.length/2;
 
-  // Split into fixed and free players
   const fixedBlack=players.filter(p=>teamAssign[p._idx]==='B');
   const fixedWhite=players.filter(p=>teamAssign[p._idx]==='W');
   const free=players.filter(p=>!teamAssign[p._idx]);
 
-  // Validate constraints
   if(fixedBlack.length>half||fixedWhite.length>half){
     alert(`Too many players pre-assigned to one team!\nMax per team: ${half}`);return;
   }
 
-  const needBlack=half-fixedBlack.length;
+  // --- PHASE 1: Split free players by role, balance within each role ---
+  const byRole={F:[],M:[],B:[]};
+  free.forEach(p=>byRole[role(p)].push(p));
 
-  let bT1=[],bT2=[],bS=Infinity;
-  for(const extra of combos(free,needBlack)){
-    const t1=[...fixedBlack,...extra];
-    const t2=[...fixedWhite,...free.filter(p=>!extra.includes(p))];
-    const s=score(t1,t2);
-    if(s<bS){bS=s;bT1=[...t1];bT2=[...t2];}
-    if(bS<0.05)break;  // good enough — stop early
+  // Sort each group by avg desc so combos start from the best distribution
+  Object.values(byRole).forEach(g=>g.sort((a,b)=>avg(b)-avg(a)));
+
+  // Split each role group evenly (skill-balanced)
+  const splits={};
+  ['F','M','B'].forEach(r=>{splits[r]=splitGroup(byRole[r]);});
+
+  // Build base teams from role splits
+  let t1=[...fixedBlack,...splits.F.a,...splits.M.a,...splits.B.a];
+  let t2=[...fixedWhite,...splits.F.b,...splits.M.b,...splits.B.b];
+
+  // --- PHASE 2: Fine-tune by trying swaps of same-role players ---
+  // This preserves role counts while improving stamina/avg balance
+  let bS=score(t1,t2), bT1=[...t1], bT2=[...t2];
+  const improved=true;
+  for(let pass=0;pass<3;pass++){
+    for(let i=0;i<t1.length;i++){
+      for(let j=0;j<t2.length;j++){
+        if(role(t1[i])!==role(t2[j]))continue; // only swap same role
+        const nt1=[...t1]; const nt2=[...t2];
+        [nt1[i],nt2[j]]=[nt2[j],nt1[i]];
+        const s=score(nt1,nt2);
+        if(s<bS){bS=s;bT1=[...nt1];bT2=[...nt2];t1=[...nt1];t2=[...nt2];}
+      }
+    }
   }
+
   renderTeams(bT1,bT2);showTab('teams');
 }
 
