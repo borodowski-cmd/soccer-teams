@@ -1,41 +1,41 @@
-Name,Forward,Midfield,Defense,TeamPlayer,Stamina,GK_Skill,GK_Willingness
-Agustin,7,8,6.5,8,7,4,3
-Alex,7,7,6,6,6,4,4
-Andres,6.5,7,6.5,6.5,6.5,7.5,7.5
-Ariel (Mena),6,5.5,8,6.5,6.5,5,5
-Bruno,6.5,7,7,6.5,6.5,4,4
-Clement,6.5,5.5,7.5,6,6,5,5
-Daniel,4.5,5,5.5,6,5,5,7
-Eduardo Be,7,7,6,6.5,6.5,4,2.5
-Eduardo C,6,7,7.5,6,6,5,5
-Eduardo GF,7.5,5.5,6,6,7,4,2
-Ellis,7,7.5,6,7,6.5,5,6
-Enrique,4.5,5,7.5,6,6,8,8
-Federico,7.5,7,6.5,7,7,5,5
-Felipe E.,6.5,7,6.5,6,7.5,4,4
-Gabriel (Uru),7,7,7.5,6,6,4.5,4.5
-Invitado #1 - Good,6.5,6.5,6.5,4,6,5,5
-Jaime,8,8,7,6.5,7.5,4,2
-Jeremy,7,6.5,6.5,6,6.5,5,5
-Joe A.,7,7,5.5,6,6,4,5
-Joel,7,7.5,6,6.5,6.5,4,2
-Jonathan A,6,7,7,6,6.5,4,4.5
-Jonathan E,7.5,6.5,7,6,6.5,4,3
-Joseph (Chino),6.5,7.5,8,7,7.5,5,3
-Juan (Peta),6,6.5,7.5,6,6.5,5,5
-Lucas,6,6,7,6,6.5,5,2
-Marcelo,6,5.5,8,6.5,7.5,7,7
-Marcelo (Cabra),6,6.5,6.5,6,7,5,5
-Marcos,4.5,5.5,7,5,5,5,6.5
-Martin,7,5,6.5,6,6.5,8,8
-Martin Benzaquen,6,6.5,8,6,6,5,5
-Mauricio,5,5.5,7,5,5,5,7
-Rafael Braun,7,6,5.5,5,5.5,5,5
-Rafael L,6,6.5,6.5,6.5,6,6,6
-Ricardo K.,6,6.5,6,5.5,7,5,5
-Roberto,5.5,5.5,8,7,7,8.5,8.5
-Ronny,6.5,6,6.5,6,7,6,6
-Sidney,5,5,7,5,5,5,5
-Stuart,8.5,6.5,6.5,7.5,6,6.5,6.5
-Tommy,7,7.5,5,5,5.5,4,4
-Vladimir,7,6.5,7,6,6.5,4,2
+Name,Position,Forward,Midfield,Defense,GK_Skill,GK_Willingness,TeamPlayer,Stamina
+Agustin,M,7,8,6.5,4,3,8,7
+Alex,M,7,7,6,4,4,6,6
+Andres,B,6.5,7,6.5,7.5,7.5,6.5,6.5
+Ariel (Mena),B,6,5.5,8,5,5,6.5,6.5
+Bruno,B,6.5,7,7,4,4,6.5,6.5
+Clement,B,6.5,5.5,7.5,5,5,6,6
+Daniel,B,4.5,5,5.5,5,7,6,5
+Eduardo Be,M,7,7,6,4,2.5,6.5,6.5
+Eduardo C,B,6,7,7.5,5,5,6,6
+Eduardo GF,F,7.5,5.5,6,4,2,6,7
+Ellis,M,7,7.5,6,5,6,7,6.5
+Enrique,GK,4.5,5,7.5,8,8,6,6
+Federico,F,7.5,7,6.5,5,5,7,7
+Felipe E.,M,6.5,7,6.5,4,4,6,7.5
+Gabriel (Uru),B,7,7,7.5,4.5,4.5,6,6
+Invitado #1,M,6.5,6.5,6.5,5,5,4,6
+Jaime,F,8,8,7,4,2,6.5,7.5
+Jeremy,M,7,6.5,6.5,5,5,6,6.5
+Joe A.,F,7,7,5.5,4,5,6,6
+Joel,M,7,7.5,6,4,2,6.5,6.5
+Jonathan A,B,6,7,7,4,4.5,6,6.5
+Jonathan E,F,7.5,6.5,7,4,3,6,6.5
+Joseph (Chino),B,6.5,7.5,8,5,3,7,7.5
+Juan (Peta),B,6,6.5,7.5,5,5,6,6.5
+Lucas,B,6,6,7,5,2,6,6.5
+Marcelo,B,6,5.5,8,7,7,6.5,7.5
+Marcelo (Cabra),M,6,6.5,6.5,5,5,6,7
+Marcos,B,4.5,5.5,7,5,6.5,5,5
+Martin,GK,7,5,6.5,8,8,6,6.5
+Martin Benzaquen,B,6,6.5,8,5,5,6,6
+Mauricio,B,5,5.5,7,5,7,5,5
+Rafael Braun,F,7,6,5.5,5,5,5,5.5
+Rafael L,M,6,6.5,6.5,6,6,6.5,6
+Ricardo K.,M,6,6.5,6,5,5,5.5,7
+Roberto,GK,5.5,5.5,8,8.5,8.5,7,7
+Ronny,M,6.5,6,6.5,6,6,6,7
+Sidney,B,5,5,7,5,5,5,5
+Stuart,F,8.5,6.5,6.5,6.5,6.5,7.5,6
+Tommy,M,7,7.5,5,4,4,5,5.5
+Vladimir,B,7,6.5,7,4,2,6,6.5

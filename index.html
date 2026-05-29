@@ -7,10 +7,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>⚽ Soccer Team Builder</title>
 <style>
-:root {
+:root{
   --green:#1a7a4a; --green-light:#e8f5ee; --green-dark:#0f5233;
   --pitch:#1e6b3c;
-  --black-team:#1a1a1a; --white-team:#f5f0e8; --white-border:#c8b97a;
   --red:#c0392b; --red-light:#fdecea;
   --amber:#d4860b; --amber-light:#fef3e2;
   --bg:#f2f4f1; --surface:#fff; --surface2:#f0f2ef;
@@ -19,10 +18,9 @@
   --fwd-bg:#fdecea; --fwd-c:#922b21;
   --mid-bg:#e8f5ee; --mid-c:#0f5233;
   --def-bg:#e8f0fe; --def-c:#1a3c8a;
+  --gk-bg:#fff3e0;  --gk-c:#b45309;
   --tp-bg:#fef9e7;  --tp-c:#7d6608;
   --sta-bg:#f4ecf7; --sta-c:#6c3483;
-  --gk-bg:#fff3e0;  --gk-c:#b45309;
-  --gkw-bg:#fce4ec; --gkw-c:#880e4f;
   --r:14px; --r-sm:10px;
   --shadow:0 1px 4px rgba(0,0,0,.08),0 2px 12px rgba(0,0,0,.06);
   --hdr:56px; --nav:62px;
@@ -33,15 +31,11 @@
 html,body{height:100%;overscroll-behavior:none;}
 body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);}
 
-/* ── HEADER ── */
-.hdr{
-  position:fixed;top:0;left:0;right:0;z-index:60;
-  background:var(--pitch);
-  height:calc(var(--hdr) + var(--sat));
-  padding:var(--sat) 14px 0;
+/* HEADER */
+.hdr{position:fixed;top:0;left:0;right:0;z-index:60;background:var(--pitch);
+  height:calc(var(--hdr) + var(--sat));padding:var(--sat) 14px 0;
   display:flex;align-items:flex-end;padding-bottom:10px;gap:10px;
-  box-shadow:0 2px 10px rgba(0,0,0,.25);
-}
+  box-shadow:0 2px 10px rgba(0,0,0,.25);}
 .hdr-icon{font-size:22px;flex-shrink:0;}
 .hdr-titles{flex:1;min-width:0;}
 .hdr-titles h1{color:#fff;font-size:17px;font-weight:700;line-height:1.2;}
@@ -51,279 +45,210 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 .hdr-btn{background:rgba(255,255,255,.15);border:none;color:rgba(255,255,255,.85);
   font-size:12px;font-weight:500;padding:6px 10px;border-radius:8px;cursor:pointer;white-space:nowrap;}
 
-/* ── SCROLL CONTAINER ── */
-.scroller{
-  position:fixed;
-  top:calc(var(--hdr) + var(--sat));
-  bottom:calc(var(--nav) + var(--sab));
-  left:0;right:0;
-  overflow-y:auto;-webkit-overflow-scrolling:touch;
-}
+/* LAYOUT */
+.scroller{position:fixed;top:calc(var(--hdr) + var(--sat));bottom:calc(var(--nav) + var(--sab));
+  left:0;right:0;overflow-y:auto;-webkit-overflow-scrolling:touch;}
 .panel{display:none;padding:14px 14px 24px;}
 .panel.active{display:block;}
 
-/* ── BOTTOM NAV ── */
-.bnav{
-  position:fixed;bottom:0;left:0;right:0;z-index:60;
-  background:var(--surface);border-top:1px solid var(--border);
-  display:flex;
-  padding-bottom:var(--sab);
-  box-shadow:0 -2px 12px rgba(0,0,0,.07);
-}
-.bnav-item{
-  flex:1;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;padding:9px 4px 7px;
-  cursor:pointer;color:var(--text3);font-size:11px;font-weight:500;
-  gap:3px;border:none;background:none;transition:color .15s;
-}
+/* BOTTOM NAV */
+.bnav{position:fixed;bottom:0;left:0;right:0;z-index:60;background:var(--surface);
+  border-top:1px solid var(--border);display:flex;padding-bottom:var(--sab);
+  box-shadow:0 -2px 12px rgba(0,0,0,.07);}
+.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:9px 4px 7px;cursor:pointer;color:var(--text3);font-size:11px;font-weight:500;
+  gap:3px;border:none;background:none;transition:color .15s;}
 .bnav-item.active{color:var(--green);}
-.bnav-icon{font-size:23px;line-height:1;}
-.nbadge{display:inline-block;background:var(--green);color:#fff;
-  font-size:10px;font-weight:700;padding:1px 6px;border-radius:9px;min-width:18px;text-align:center;}
+.bnav-icon{font-size:22px;line-height:1;}
+.nbadge{display:inline-block;background:var(--green);color:#fff;font-size:10px;font-weight:700;
+  padding:1px 6px;border-radius:9px;min-width:18px;text-align:center;}
 .nbadge.zero{background:var(--border);color:var(--text3);}
 
-/* ── SELECT PANEL ── */
+/* SELECT PANEL */
 .top-bar{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
 .sel-pill{background:var(--surface);border:1px solid var(--border);border-radius:20px;
-  padding:7px 14px;font-size:13px;color:var(--text2);white-space:nowrap;}
+  padding:6px 13px;font-size:13px;color:var(--text2);white-space:nowrap;}
 .sel-pill b{color:var(--green-dark);}
-select.size-sel{
-  flex:1;font-size:14px;padding:7px 32px 7px 12px;border-radius:20px;
-  border:1px solid var(--border);background:var(--surface);color:var(--text);
-  appearance:none;-webkit-appearance:none;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%234a5a46' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
-  background-repeat:no-repeat;background-position:right 12px center;
-}
+.sel-pill.odd{border-color:var(--red);background:var(--red-light);color:var(--red);}
 .search-wrap{position:relative;margin-bottom:10px;}
-.search-wrap input{
-  width:100%;padding:11px 14px 11px 40px;
-  border:1px solid var(--border);border-radius:20px;
-  font-size:15px;background:var(--surface);color:var(--text);
-}
+.search-wrap input{width:100%;padding:11px 14px 11px 40px;border:1px solid var(--border);
+  border-radius:20px;font-size:15px;background:var(--surface);color:var(--text);}
 .search-wrap input:focus{outline:none;border-color:var(--green);}
-.s-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--text3);pointer-events:none;}
+.s-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:16px;
+  color:var(--text3);pointer-events:none;}
 .warn{background:var(--amber-light);border:1px solid #f0c070;border-radius:var(--r-sm);
   padding:10px 14px;font-size:13px;color:var(--amber);margin-bottom:10px;display:none;}
 
-/* ── PLAYER ROWS ── */
+/* PLAYER ROWS */
 .plist{display:flex;flex-direction:column;gap:8px;}
-.prow{
-  background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);
-  padding:13px 14px;display:flex;align-items:center;gap:11px;
-  cursor:pointer;transition:border-color .12s,background .12s;
-  -webkit-user-select:none;user-select:none;
-}
+.prow{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);
+  padding:11px 12px;display:flex;align-items:center;gap:10px;cursor:pointer;
+  transition:border-color .12s,background .12s;-webkit-user-select:none;user-select:none;}
 .prow.sel{border-color:var(--green);background:var(--green-light);}
 .prow.sel .pname{color:var(--green-dark);}
-.pcheck{
-  width:28px;height:28px;border-radius:50%;
-  border:2px solid var(--border);background:var(--surface2);
-  display:flex;align-items:center;justify-content:center;
-  font-size:14px;flex-shrink:0;transition:all .15s;
-}
+.pcheck{width:26px;height:26px;border-radius:50%;border:2px solid var(--border);
+  background:var(--surface2);display:flex;align-items:center;justify-content:center;
+  font-size:13px;flex-shrink:0;transition:all .15s;}
 .prow.sel .pcheck{background:var(--green);border-color:var(--green);color:#fff;}
 .pinfo{flex:1;min-width:0;}
-.pname{font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px;
+.pname{font-size:14px;font-weight:600;color:var(--text);margin-bottom:3px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .chips{display:flex;flex-wrap:wrap;gap:3px;}
-.chip{font-size:10px;font-weight:700;padding:2px 6px;border-radius:8px;}
+.chip{font-size:10px;font-weight:700;padding:2px 5px;border-radius:6px;}
 .cf{background:var(--fwd-bg);color:var(--fwd-c);}
 .cm{background:var(--mid-bg);color:var(--mid-c);}
 .cb{background:var(--def-bg);color:var(--def-c);}
+.cgk{background:var(--gk-bg);color:var(--gk-c);}
 .ctp{background:var(--tp-bg);color:var(--tp-c);}
 .cst{background:var(--sta-bg);color:var(--sta-c);}
-.cgk{background:var(--gk-bg);color:var(--gk-c);}
-.cgkw{background:var(--gkw-bg);color:var(--gkw-c);}
-.pright{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;}
-.avg-pill{font-size:12px;font-weight:700;padding:3px 9px;border-radius:10px;
+.pright{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;}
+.role-pill{font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;}
+.avg-pill{font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;
   background:var(--surface2);color:var(--text2);}
-.role-pill{font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;}
-.row-acts{display:flex;gap:5px;}
-.ibtn{width:34px;height:34px;border-radius:9px;border:1px solid var(--border);
+.row-acts{display:flex;gap:4px;}
+.ibtn{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);
   background:var(--surface2);display:flex;align-items:center;justify-content:center;
-  font-size:15px;cursor:pointer;flex-shrink:0;}
+  font-size:14px;cursor:pointer;flex-shrink:0;}
 .ibtn.del{background:var(--red-light);border-color:#f5c6c2;}
 
-/* ── STICKY GENERATE BTN ── */
-.gen-sticky{
-  position:sticky;bottom:0;z-index:10;
-  padding:12px 0 2px;
-  background:linear-gradient(transparent,var(--bg) 35%);
-}
-.gen-btn{
-  display:flex;align-items:center;justify-content:center;gap:8px;
-  width:100%;padding:16px;
-  background:var(--green);color:#fff;
-  font-size:16px;font-weight:700;
+/* TEAM ASSIGN BUTTONS (on selected players) */
+.ta-wrap{display:flex;gap:4px;}
+.ta-btn{width:26px;height:26px;border-radius:50%;border:2px solid var(--border);
+  background:var(--surface2);font-size:12px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;}
+.ta-btn.b-on{background:#1a1a1a;border-color:#1a1a1a;color:#fff;}
+.ta-btn.w-on{background:#f0e8c8;border-color:#c8b97a;color:#333;}
+
+/* STICKY GENERATE BTN */
+.gen-sticky{position:sticky;bottom:0;z-index:10;padding:12px 0 2px;
+  background:linear-gradient(transparent,var(--bg) 35%);}
+.gen-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
+  padding:16px;background:var(--green);color:#fff;font-size:16px;font-weight:700;
   border:none;border-radius:var(--r);cursor:pointer;
-  box-shadow:0 4px 18px rgba(26,122,74,.38);
-  transition:all .15s;
-}
+  box-shadow:0 4px 18px rgba(26,122,74,.38);transition:all .15s;}
 .gen-btn:active{transform:scale(.98);}
 .gen-btn:disabled{background:var(--border);color:var(--text3);box-shadow:none;cursor:not-allowed;}
 
-/* ── TEAMS PANEL ── */
+/* TEAMS PANEL */
 .bal-card{background:var(--surface);border-radius:var(--r);padding:14px 16px;
   margin-bottom:14px;box-shadow:var(--shadow);}
-.bal-title{font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;
+.bal-title{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;
   letter-spacing:.05em;margin-bottom:10px;}
-.bal-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+.bal-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
 .bal-row:last-child{margin-bottom:0;}
-.bal-lbl{font-size:12px;color:var(--text2);width:60px;flex-shrink:0;}
-.bar-wrap{flex:1;height:8px;background:var(--surface2);border-radius:4px;
-  overflow:hidden;border:1px solid var(--border);}
+.bal-lbl{font-size:12px;color:var(--text2);width:90px;flex-shrink:0;}
+.bar-wrap{flex:1;height:7px;background:var(--surface2);border-radius:4px;overflow:hidden;}
 .bar-fill{height:100%;border-radius:4px;transition:width .5s;}
-.bal-sc{font-size:11px;color:var(--text3);min-width:76px;text-align:right;flex-shrink:0;}
+.bal-sc{font-size:11px;color:var(--text3);min-width:60px;text-align:right;flex-shrink:0;}
 .tstack{display:flex;flex-direction:column;gap:12px;}
 .tcard{border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);}
 .thead{padding:14px 16px;display:flex;align-items:center;justify-content:space-between;}
-.thead-black{background:var(--black-team);}
-.thead-white{background:var(--white-team);border-bottom:2px solid var(--white-border);}
+.thead-black{background:#1a1a1a;}
+.thead-white{background:#f0e8c8;border-bottom:2px solid #c8b97a;}
 .thead-title{font-size:17px;font-weight:700;}
 .thead-black .thead-title{color:#fff;}
-.thead-white .thead-title{color:var(--black-team);}
-.thead-avg{font-size:13px;font-weight:500;}
-.thead-black .thead-avg{color:rgba(255,255,255,.6);}
-.thead-white .thead-avg{color:var(--text2);}
+.thead-white .thead-title{color:#1a1a1a;}
+.thead-avg{font-size:12px;font-weight:500;opacity:.7;}
+.thead-black .thead-avg{color:#fff;}
+.thead-white .thead-avg{color:#333;}
 .tbody{background:var(--surface);}
-.pos-hdr{font-size:10px;font-weight:700;letter-spacing:.07em;padding:6px 14px 4px;
+.pos-hdr{font-size:10px;font-weight:700;letter-spacing:.07em;padding:5px 14px 3px;
   background:var(--surface2);color:var(--text3);text-transform:uppercase;
   border-bottom:1px solid var(--border);}
 .tprow{display:flex;align-items:center;justify-content:space-between;
-  padding:10px 14px;border-bottom:1px solid var(--border);}
+  padding:9px 14px;border-bottom:1px solid var(--border);}
 .tprow:last-child{border-bottom:none;}
 .tpname{font-size:14px;font-weight:600;color:var(--text);}
-.tpstats{font-size:11px;color:var(--text3);margin-top:2px;}
-.tpavg{font-size:14px;font-weight:700;color:var(--text2);}
-.gk-section{background:var(--gk-bg);border-top:2px solid #f59e0b;padding:10px 14px;}
-.gk-section-title{font-size:10px;font-weight:700;letter-spacing:.07em;color:var(--gk-c);text-transform:uppercase;margin-bottom:6px;}
-.gk-player-row{display:flex;align-items:center;justify-content:space-between;padding:4px 0;}
-.gk-player-name{font-size:13px;font-weight:600;color:var(--text);}
-.gk-scores{display:flex;gap:5px;align-items:center;}
-.gk-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;}
-.gk-star{font-size:13px;}
-.back-wrap{margin-top:14px;display:flex;justify-content:center;}
-.back-wrap button{background:none;border:1px solid var(--border);border-radius:20px;
-  padding:10px 22px;font-size:14px;color:var(--text2);cursor:pointer;}
+.tpstats{font-size:10px;color:var(--text3);margin-top:2px;}
+.tpavg{font-size:13px;font-weight:700;color:var(--text2);}
+.regen-bar{margin-top:14px;display:flex;gap:8px;justify-content:center;}
 
-/* ── ROSTER PANEL ── */
+/* ROSTER PANEL */
 .rtoolbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
 .btn{display:inline-flex;align-items:center;gap:5px;font-size:14px;font-weight:600;
   padding:10px 16px;border-radius:var(--r-sm);border:none;cursor:pointer;transition:all .15s;}
 .btn:active{transform:scale(.97);}
 .btn-p{background:var(--green);color:#fff;}
 .btn-s{background:var(--surface);color:var(--text);border:1px solid var(--border);}
-.btn-sm{font-size:13px;padding:8px 13px;}
+.btn-sm{font-size:12px;padding:7px 12px;}
+.btn-danger{color:var(--red);}
 .csv-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);
   padding:12px;margin-bottom:12px;display:none;}
 textarea.darea{width:100%;height:90px;font-family:monospace;font-size:12px;padding:8px;
   border:1px solid var(--border);border-radius:var(--r-sm);resize:none;
   color:var(--text);background:var(--surface2);margin-bottom:8px;}
-.rlist{display:flex;flex-direction:column;gap:8px;}
+.rlist{display:flex;flex-direction:column;gap:6px;}
 .rrow{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
-  padding:12px 14px;display:flex;align-items:center;gap:10px;}
+  padding:11px 13px;display:flex;align-items:center;gap:10px;}
 .rinfo{flex:1;min-width:0;}
-.rname{font-size:14px;font-weight:600;color:var(--text);margin-bottom:3px;
+.rname{font-size:14px;font-weight:600;color:var(--text);margin-bottom:2px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.rstats{font-size:11px;color:var(--text3);}
-.rright{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;}
+.rstats{font-size:10px;color:var(--text3);}
+.rright{display:flex;align-items:center;gap:6px;flex-shrink:0;}
 
-/* ── MODAL (bottom sheet) ── */
+/* MODAL (bottom sheet) */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;
   display:none;align-items:flex-end;justify-content:center;}
 .overlay.open{display:flex;}
-.sheet{
-  background:var(--surface);border-radius:20px 20px 0 0;
-  width:100%;max-width:560px;max-height:92vh;
-  overflow-y:auto;-webkit-overflow-scrolling:touch;
-  padding-bottom:var(--sab);
-  animation:slideUp .22s ease;
-}
+.sheet{background:var(--surface);border-radius:20px 20px 0 0;width:100%;
+  max-width:560px;max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding-bottom:var(--sab);animation:slideUp .22s ease;}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
 .sheet-handle{width:38px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 2px;}
-.sheet-hdr{padding:12px 18px 14px;display:flex;align-items:center;
+.sheet-hdr{padding:10px 18px 12px;display:flex;align-items:center;
   justify-content:space-between;border-bottom:1px solid var(--border);}
-.sheet-hdr h3{font-size:18px;font-weight:700;}
-.sheet-close{background:var(--surface2);border:none;width:32px;height:32px;border-radius:50%;
-  font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text2);}
-.sheet-body{padding:16px 18px;}
-.frow{margin-bottom:16px;}
-.frow label{display:block;font-size:12px;font-weight:700;color:var(--text2);
-  margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em;}
-.frow input[type=text]{
-  width:100%;padding:13px 14px;border:1px solid var(--border);
-  border-radius:var(--r-sm);font-size:16px;color:var(--text);background:var(--surface);}
-.frow input[type=text]:focus{outline:none;border-color:var(--green);}
-.slist{display:flex;flex-direction:column;gap:16px;}
+.sheet-hdr h3{font-size:17px;font-weight:700;}
+.sheet-close{background:var(--surface2);border:none;width:30px;height:30px;border-radius:50%;
+  font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text2);}
+.sheet-body{padding:14px 18px;}
+.flabel{display:block;font-size:11px;font-weight:700;color:var(--text2);
+  margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;}
+.fname-input{width:100%;padding:12px 14px;border:1.5px solid var(--border);
+  border-radius:var(--r-sm);font-size:16px;color:var(--text);background:var(--surface);
+  margin-bottom:16px;}
+.fname-input:focus{outline:none;border-color:var(--green);}
+.pos-btns{display:flex;gap:8px;margin-bottom:18px;}
+.pos-btn{flex:1;padding:10px 8px;border-radius:var(--r-sm);border:2px solid var(--border);
+  background:var(--surface2);font-size:13px;font-weight:600;color:var(--text2);
+  cursor:pointer;text-align:center;transition:all .15s;}
+.pos-btn.active{border-color:var(--green);background:var(--green-light);color:var(--green-dark);}
+.sliders{display:flex;flex-direction:column;gap:14px;}
 .sitem label{font-size:13px;font-weight:600;color:var(--text2);
-  display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;}
-.sitem label span{font-size:17px;font-weight:800;color:var(--text);
-  background:var(--surface2);padding:2px 10px;border-radius:8px;min-width:42px;text-align:center;}
+  display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.sitem label span{font-size:16px;font-weight:800;color:var(--text);
+  background:var(--surface2);padding:2px 10px;border-radius:8px;min-width:40px;text-align:center;}
 .sitem input[type=range]{width:100%;accent-color:var(--green);height:6px;cursor:pointer;}
-.sheet-foot{padding:14px 18px 16px;border-top:1px solid var(--border);display:flex;gap:10px;}
-.sheet-foot .btn{flex:1;justify-content:center;padding:14px;font-size:15px;}
+.sheet-foot{padding:12px 18px 16px;border-top:1px solid var(--border);display:flex;gap:10px;}
+.sheet-foot .btn{flex:1;justify-content:center;padding:13px;font-size:15px;}
 
-/* ── SETTINGS PANEL ── */
-.settings-section{background:var(--surface);border-radius:var(--r);margin-bottom:14px;overflow:hidden;box-shadow:var(--shadow);}
-.settings-hdr{background:var(--pitch);color:#fff;padding:13px 16px;display:flex;align-items:center;gap:9px;}
-.settings-hdr h2{font-size:15px;font-weight:700;}
-.settings-hdr p{font-size:11px;color:rgba(255,255,255,.65);margin-top:1px;}
-.settings-body{padding:16px;}
-.weight-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
-.weight-row:last-of-type{margin-bottom:0;}
-.weight-icon{font-size:20px;flex-shrink:0;width:28px;text-align:center;}
-.weight-info{flex:1;min-width:0;}
-.weight-label{font-size:13px;font-weight:600;color:var(--text);margin-bottom:5px;display:flex;justify-content:space-between;align-items:center;}
-.weight-label .wpct{font-size:14px;font-weight:800;color:var(--green-dark);background:var(--green-light);padding:2px 9px;border-radius:8px;min-width:44px;text-align:center;}
-.weight-info input[type=range]{width:100%;accent-color:var(--green);height:6px;cursor:pointer;}
-.total-bar{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 16px;margin-top:16px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
-.total-label{font-size:13px;color:var(--text2);font-weight:500;}
-.total-val{font-size:16px;font-weight:800;}
-.total-val.ok{color:var(--green);}
-.total-val.bad{color:var(--red);}
-.normalize-btn{background:var(--green);color:#fff;border:none;border-radius:var(--r-sm);padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;}
-.normalize-btn:active{transform:scale(.97);}
-.preset-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
-.preset-btn{flex:1;min-width:80px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:8px 10px;font-size:12px;font-weight:600;color:var(--text2);cursor:pointer;text-align:center;transition:all .15s;}
-.preset-btn:active{transform:scale(.97);}
-.preset-btn.active-preset{background:var(--green-light);border-color:var(--green);color:var(--green-dark);}
-.info-note{font-size:12px;color:var(--text3);background:var(--surface2);border-radius:var(--r-sm);padding:10px 13px;margin-top:12px;line-height:1.5;}
-
-/* ── TEAM PRE-ASSIGN ── */
-.team-assign{display:flex;gap:4px;align-items:center;}
-.ta-btn{
-  width:28px;height:28px;border-radius:50%;border:2px solid var(--border);
-  background:var(--surface2);font-size:13px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  transition:all .15s;flex-shrink:0;font-weight:700;line-height:1;
-}
-.ta-btn.black-on{background:#1a1a1a;border-color:#1a1a1a;color:#fff;}
-.ta-btn.white-on{background:#f5f0e8;border-color:#c8b97a;color:#1a1a1a;}
-.ta-lbl{font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;text-align:center;margin-top:1px;}
-
-/* ── SETTINGS SECTIONS ── */
-.settings-section{background:var(--surface);border-radius:var(--r);margin-bottom:14px;overflow:hidden;box-shadow:var(--shadow);}
-.settings-hdr{padding:14px 16px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+/* SETTINGS */
+.settings-section{background:var(--surface);border-radius:var(--r);margin-bottom:14px;
+  overflow:hidden;box-shadow:var(--shadow);}
+.settings-hdr{padding:13px 16px;border-bottom:1px solid var(--border);
+  display:flex;align-items:flex-start;justify-content:space-between;}
 .settings-hdr h2{font-size:15px;font-weight:700;color:var(--text);}
 .settings-hdr p{font-size:12px;color:var(--text3);margin-top:2px;}
 .settings-body{padding:14px 16px;}
-.frow{display:flex;flex-direction:column;gap:4px;margin-bottom:12px;}
-.frow label{font-size:12px;font-weight:600;color:var(--text2);}
-.frow input[type=text]{padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:14px;color:var(--text);background:var(--surface2);outline:none;}
-.frow input[type=text]:focus{border-color:var(--green);}
-.info-note{background:var(--green-light);border:1px solid #a8d5b8;border-radius:var(--r-sm);padding:10px 13px;font-size:12.5px;color:var(--green-dark);line-height:1.6;}
-.btn-sm{font-size:12px;padding:7px 12px;}
+.sfield{margin-bottom:12px;}
+.sfield label{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:5px;}
+.sfield input{width:100%;padding:9px 11px;border:1.5px solid var(--border);
+  border-radius:var(--r-sm);font-size:14px;color:var(--text);background:var(--surface2);}
+.sfield input:focus{outline:none;border-color:var(--green);}
+.info-note{background:var(--green-light);border:1px solid #a8d5b8;border-radius:var(--r-sm);
+  padding:10px 13px;font-size:12px;color:var(--green-dark);line-height:1.6;margin-top:12px;}
+.gh-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;}
+#gh-status{display:none;margin-top:10px;padding:9px 13px;border-radius:var(--r-sm);font-size:13px;}
 
-/* ── DESKTOP UPGRADES ── */
+/* DESKTOP */
 @media(min-width:600px){
   .plist{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
   .tstack{flex-direction:row;}
   .tstack .tcard{flex:1;}
-  .slist{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
   .sheet{border-radius:var(--r);max-height:88vh;margin:auto;}
   .overlay{align-items:center;}
   .panel{padding:20px 22px 28px;}
-  .rlist{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .rlist{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .sliders{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
 }
 @media(min-width:900px){
   .plist{grid-template-columns:1fr 1fr 1fr;}
@@ -333,7 +258,6 @@ textarea.darea{width:100%;height:90px;font-family:monospace;font-size:12px;paddi
 </head>
 <body>
 
-<!-- Header -->
 <header class="hdr">
   <div class="hdr-icon">⚽</div>
   <div class="hdr-titles">
@@ -342,205 +266,105 @@ textarea.darea{width:100%;height:90px;font-family:monospace;font-size:12px;paddi
   </div>
   <div class="hdr-right">
     <span id="saved-badge">✓ Saved</span>
+    <button class="hdr-btn" id="sync-btn" onclick="syncFromGitHub()">↻ Sync</button>
     <button class="hdr-btn" onclick="showTab('settings')">⚙️</button>
-    <button class="hdr-btn" id="sync-btn" onclick="syncFromGitHub()" title="Reload roster from GitHub">↻ Sync</button>
   </div>
 </header>
 
-<!-- Scrollable content -->
 <div class="scroller" id="scroller">
 
-  <!-- Players -->
+  <!-- PLAYERS TAB -->
   <div class="panel active" id="panel-select">
     <div class="top-bar">
-      <div class="sel-pill">Selected: <b id="sel-count">0</b></div>
-      <select class="size-sel" id="size-sel" onchange="onSizeChange()">
-        <option value="10">10 players</option>
-        <option value="12" selected>12 players</option>
-        <option value="16">16 players</option>
-        <option value="18">18 players</option>
-      </select>
+      <div class="sel-pill" id="count-pill">Selected: <b id="sel-count">0</b></div>
+      <div class="sel-pill" id="teams-pill" style="display:none">Teams of <b id="team-n">0</b></div>
     </div>
     <div class="search-wrap">
       <span class="s-icon">🔍</span>
       <input type="text" id="search" placeholder="Search player…" oninput="renderList()" autocomplete="off" autocorrect="off" autocapitalize="none"/>
     </div>
     <div class="warn" id="warn"></div>
-    <div class="warn" id="assign-info" style="display:none;margin-bottom:8px;"></div>
+    <div class="warn" id="assign-info" style="display:none"></div>
     <div class="plist" id="plist"></div>
     <div class="gen-sticky">
       <button class="gen-btn" id="gen-btn" disabled onclick="generate()">⚡ Generate Balanced Teams</button>
     </div>
   </div>
 
-  <!-- Teams -->
+  <!-- TEAMS TAB -->
   <div class="panel" id="panel-teams">
-    <div id="teams-out"><p style="text-align:center;color:var(--text3);padding:40px 0;font-size:15px;">Go to Players tab and generate teams first.</p></div>
+    <div id="teams-out"><p style="text-align:center;color:var(--text3);padding:40px 0;font-size:15px;">Select players and generate teams first.</p></div>
   </div>
 
-  <!-- Roster -->
+  <!-- ROSTER TAB -->
   <div class="panel" id="panel-roster">
     <div class="rtoolbar">
       <button class="btn btn-p" onclick="openModal()">＋ Add Player</button>
-      <button class="btn btn-s btn-sm" onclick="exportCSV()" title="Download roster.csv to commit to GitHub">↓ roster.csv</button>
+      <button class="btn btn-s btn-sm" onclick="exportCSV()">↓ roster.csv</button>
       <button class="btn btn-s btn-sm" onclick="toggleImport()">↑ Import CSV</button>
     </div>
     <div class="csv-box" id="csv-box">
-      <textarea class="darea" id="csv-paste" placeholder="Name,Forward,Midfield,Defense,TeamPlayer,Stamina,GK_Skill,GK_Willingness&#10;Carlos,8,7,6,7,8,6,7"></textarea>
+      <textarea class="darea" id="csv-paste" placeholder="Name,Forward,Midfield,Defense,TeamPlayer,Stamina,GK_Skill,GK_Willingness,IsGoalkeeper&#10;Carlos,8,7,6,7,8,4,3,false"></textarea>
       <button class="btn btn-s btn-sm" onclick="importCSV()">Import</button>
     </div>
     <div class="rlist" id="rlist"></div>
   </div>
 
-  <!-- Settings -->
+  <!-- SETTINGS TAB -->
   <div class="panel" id="panel-settings">
-
-    <!-- GitHub CSV Source -->
     <div class="settings-section">
       <div class="settings-hdr">
         <div>
           <h2>🔗 GitHub Roster Source</h2>
-          <p>Auto-load roster.csv from your GitHub repo</p>
+          <p>Auto-load roster.csv from your GitHub repo on every visit</p>
         </div>
       </div>
       <div class="settings-body">
-        <div class="frow">
-          <label>GitHub Username</label>
-          <input type="text" id="gh-user" placeholder="e.g. myusername" oninput="saveGhConfig()"/>
-        </div>
-        <div class="frow">
-          <label>Repository Name</label>
-          <input type="text" id="gh-repo" placeholder="e.g. soccer-teams" oninput="saveGhConfig()"/>
-        </div>
-        <div class="frow">
-          <label>Branch (default: main)</label>
-          <input type="text" id="gh-branch" placeholder="main" oninput="saveGhConfig()"/>
-        </div>
-        <div class="frow">
-          <label>CSV file path (default: roster.csv)</label>
-          <input type="text" id="gh-path" placeholder="roster.csv" oninput="saveGhConfig()"/>
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
+        <div class="sfield"><label>GitHub Username</label>
+          <input type="text" id="gh-user" placeholder="e.g. myusername" oninput="saveGhConfig()"/></div>
+        <div class="sfield"><label>Repository Name</label>
+          <input type="text" id="gh-repo" placeholder="e.g. soccer-teams" oninput="saveGhConfig()"/></div>
+        <div class="sfield"><label>Branch (default: main)</label>
+          <input type="text" id="gh-branch" placeholder="main" oninput="saveGhConfig()"/></div>
+        <div class="sfield"><label>CSV file path (default: roster.csv)</label>
+          <input type="text" id="gh-path" placeholder="roster.csv" oninput="saveGhConfig()"/></div>
+        <div class="gh-btns">
           <button class="btn btn-p btn-sm" onclick="syncFromGitHub()">↻ Load from GitHub now</button>
-          <button class="btn btn-s btn-sm" onclick="exportCSV()">↓ Export current roster.csv</button>
-          <button class="btn btn-s btn-sm" onclick="resetRoster()" style="color:var(--red);">↺ Reset to defaults</button>
+          <button class="btn btn-s btn-sm" onclick="exportCSV()">↓ Export roster.csv</button>
+          <button class="btn btn-s btn-sm btn-danger" onclick="resetRoster()">↺ Reset defaults</button>
         </div>
-        <div class="info-note" style="margin-top:12px;">
-          💡 <b>How to update the shared roster:</b><br>
-          1. Make changes in the Roster tab<br>
-          2. Click <b>↓ Export current roster.csv</b><br>
-          3. Commit that file to your GitHub repo<br>
-          4. Everyone sees the changes next time they open the app or tap <b>↻ Sync</b>
+        <div class="info-note">
+          💡 <b>Workflow to update the shared roster:</b><br>
+          1. Edit players in the Roster tab<br>
+          2. Tap <b>↓ Export roster.csv</b> and download it<br>
+          3. Commit the file to your GitHub repo<br>
+          4. Everyone gets the update next visit or via <b>↻ Sync</b>
         </div>
-        <div id="gh-status" style="margin-top:10px;display:none;"></div>
-      </div>
-    </div>
-    <div class="settings-section">
-      <div class="settings-hdr">
-        <div>
-          <h2>⚙️ Algorithm Weights</h2>
-          <p>Control how each skill influences team balancing</p>
-        </div>
-      </div>
-      <div class="settings-body">
-        <div style="margin-bottom:14px;">
-          <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Quick Presets</div>
-          <div class="preset-row">
-            <div class="preset-btn" id="preset-balanced" onclick="applyPreset('balanced')">⚖️ Balanced</div>
-            <div class="preset-btn" id="preset-attack"   onclick="applyPreset('attack')">⚔️ Attack</div>
-            <div class="preset-btn" id="preset-defense"  onclick="applyPreset('defense')">🛡 Defense</div>
-            <div class="preset-btn" id="preset-stamina"  onclick="applyPreset('stamina')">⚡ Stamina</div>
-          </div>
-        </div>
-        <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px;">Custom Weights</div>
-        <div class="weight-row">
-          <div class="weight-icon">📊</div>
-          <div class="weight-info">
-            <div class="weight-label">Overall Average <span class="wpct" id="w-lbl-avg">30%</span></div>
-            <input type="range" min="0" max="100" step="5" value="30" id="w-avg" oninput="onWeightChange()"/>
-          </div>
-        </div>
-        <div class="weight-row">
-          <div class="weight-icon">⚔️</div>
-          <div class="weight-info">
-            <div class="weight-label">Forward <span class="wpct" id="w-lbl-f">14%</span></div>
-            <input type="range" min="0" max="100" step="5" value="14" id="w-f" oninput="onWeightChange()"/>
-          </div>
-        </div>
-        <div class="weight-row">
-          <div class="weight-icon">🔄</div>
-          <div class="weight-info">
-            <div class="weight-label">Midfield <span class="wpct" id="w-lbl-m">14%</span></div>
-            <input type="range" min="0" max="100" step="5" value="14" id="w-m" oninput="onWeightChange()"/>
-          </div>
-        </div>
-        <div class="weight-row">
-          <div class="weight-icon">🛡</div>
-          <div class="weight-info">
-            <div class="weight-label">Defense <span class="wpct" id="w-lbl-b">14%</span></div>
-            <input type="range" min="0" max="100" step="5" value="14" id="w-b" oninput="onWeightChange()"/>
-          </div>
-        </div>
-        <div class="weight-row">
-          <div class="weight-icon">🤝</div>
-          <div class="weight-info">
-            <div class="weight-label">Team Player <span class="wpct" id="w-lbl-tp">14%</span></div>
-            <input type="range" min="0" max="100" step="5" value="14" id="w-tp" oninput="onWeightChange()"/>
-          </div>
-        </div>
-        <div class="weight-row">
-          <div class="weight-icon">⚡</div>
-          <div class="weight-info">
-            <div class="weight-label">Stamina <span class="wpct" id="w-lbl-st">14%</span></div>
-            <input type="range" min="0" max="100" step="5" value="14" id="w-st" oninput="onWeightChange()"/>
-          </div>
-        </div>
-        <div class="weight-row">
-          <div class="weight-icon">🧤</div>
-          <div class="weight-info">
-            <div class="weight-label">Goalkeeper (GK skill × willingness) <span class="wpct" id="w-lbl-gk">10%</span></div>
-            <input type="range" min="0" max="100" step="5" value="10" id="w-gk" oninput="onWeightChange()"/>
-          </div>
-        </div>
-        <div class="total-bar">
-          <div>
-            <div class="total-label">Total weight</div>
-            <div style="font-size:11px;color:var(--text3);margin-top:2px;">Must equal 100% to generate</div>
-          </div>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <div class="total-val ok" id="w-total">100%</div>
-            <button class="normalize-btn" onclick="normalizeWeights()">Auto-fix</button>
-          </div>
-        </div>
-        <div class="info-note">💡 Higher weight = that skill matters more when balancing. Use <b>Auto-fix</b> to rescale all sliders to exactly 100%.</div>
+        <div id="gh-status"></div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Bottom nav -->
+<!-- BOTTOM NAV -->
 <nav class="bnav">
   <button class="bnav-item active" id="nav-select" onclick="showTab('select')">
-    <span class="bnav-icon">👥</span>
-    Players
+    <span class="bnav-icon">👥</span>Players
     <span class="nbadge zero" id="nb-sel">0</span>
   </button>
   <button class="bnav-item" id="nav-teams" onclick="showTab('teams')">
-    <span class="bnav-icon">⚽</span>
-    Teams
+    <span class="bnav-icon">⚽</span>Teams
   </button>
   <button class="bnav-item" id="nav-roster" onclick="showTab('roster')">
-    <span class="bnav-icon">📋</span>
-    Roster
+    <span class="bnav-icon">📋</span>Roster
     <span class="nbadge" id="nb-roster">0</span>
   </button>
   <button class="bnav-item" id="nav-settings" onclick="showTab('settings')">
-    <span class="bnav-icon">⚙️</span>
-    Weights
+    <span class="bnav-icon">⚙️</span>Settings
   </button>
 </nav>
 
-<!-- Modal / bottom sheet -->
+<!-- ADD/EDIT MODAL -->
 <div class="overlay" id="overlay" onclick="if(event.target===this)closeModal()">
   <div class="sheet">
     <div class="sheet-handle"></div>
@@ -549,25 +373,32 @@ textarea.darea{width:100%;height:90px;font-family:monospace;font-size:12px;paddi
       <button class="sheet-close" onclick="closeModal()">✕</button>
     </div>
     <div class="sheet-body">
-      <div class="frow">
-        <label>Player Name</label>
-        <input type="text" id="f-name" placeholder="e.g. Carlos M."/>
+      <label class="flabel">Player Name</label>
+      <input type="text" class="fname-input" id="f-name" placeholder="e.g. Carlos M."/>
+
+      <label class="flabel">Primary Position</label>
+      <div class="pos-btns">
+        <button type="button" class="pos-btn active" id="pos-fwd" onclick="setPos('F')">⚔️ Forward</button>
+        <button type="button" class="pos-btn" id="pos-mid" onclick="setPos('M')">🔄 Midfielder</button>
+        <button type="button" class="pos-btn" id="pos-def" onclick="setPos('B')">🛡 Defender</button>
+        <button type="button" class="pos-btn" id="pos-gk"  onclick="setPos('GK')">🥅 Goalkeeper</button>
       </div>
-      <div class="slist">
-        <div class="sitem"><label>⚔️ Forward <span id="lv-f">7</span></label>
+
+      <div class="sliders">
+        <div class="sitem"><label>⚔️ Forward skill <span id="lv-f">7</span></label>
           <input type="range" min="1" max="10" step="0.5" value="7" id="sl-f" oninput="document.getElementById('lv-f').textContent=this.value"/></div>
-        <div class="sitem"><label>🔄 Midfield <span id="lv-m">7</span></label>
+        <div class="sitem"><label>🔄 Midfield skill <span id="lv-m">7</span></label>
           <input type="range" min="1" max="10" step="0.5" value="7" id="sl-m" oninput="document.getElementById('lv-m').textContent=this.value"/></div>
-        <div class="sitem"><label>🛡 Defense <span id="lv-b">7</span></label>
+        <div class="sitem"><label>🛡 Defense skill <span id="lv-b">7</span></label>
           <input type="range" min="1" max="10" step="0.5" value="7" id="sl-b" oninput="document.getElementById('lv-b').textContent=this.value"/></div>
-        <div class="sitem"><label>🤝 Team Player <span id="lv-tp">7</span></label>
+        <div class="sitem"><label>🥅 GK skill <span id="lv-gk">5</span></label>
+          <input type="range" min="1" max="10" step="0.5" value="5" id="sl-gk" oninput="document.getElementById('lv-gk').textContent=this.value"/></div>
+        <div class="sitem"><label>🙋 GK willingness <span id="lv-gkw">5</span></label>
+          <input type="range" min="1" max="10" step="0.5" value="5" id="sl-gkw" oninput="document.getElementById('lv-gkw').textContent=this.value"/></div>
+        <div class="sitem"><label>🤝 Team player <span id="lv-tp">7</span></label>
           <input type="range" min="1" max="10" step="0.5" value="7" id="sl-tp" oninput="document.getElementById('lv-tp').textContent=this.value"/></div>
         <div class="sitem"><label>⚡ Stamina <span id="lv-st">7</span></label>
           <input type="range" min="1" max="10" step="0.5" value="7" id="sl-st" oninput="document.getElementById('lv-st').textContent=this.value"/></div>
-        <div class="sitem"><label>🧤 GK Skill <span id="lv-gk">5</span></label>
-          <input type="range" min="1" max="10" step="0.5" value="5" id="sl-gk" oninput="document.getElementById('lv-gk').textContent=this.value"/></div>
-        <div class="sitem"><label>🙋 GK Willingness <span id="lv-gkw">5</span></label>
-          <input type="range" min="1" max="10" step="0.5" value="5" id="sl-gkw" oninput="document.getElementById('lv-gkw').textContent=this.value"/></div>
       </div>
     </div>
     <div class="sheet-foot">
@@ -578,189 +409,135 @@ textarea.darea{width:100%;height:90px;font-family:monospace;font-size:12px;paddi
 </div>
 
 <script>
-// ── Default data ──────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// DEFAULT ROSTER
+// ─────────────────────────────────────────────────────────────────────────────
 const DEFAULTS=[
-  {name:"Agustin",F:6.5,M:8,B:6.5,TP:7.5,S:7,GK:4,GKW:3},
-  {name:"Alex W.",F:7,M:7,B:6,TP:6,S:6,GK:4,GKW:4},
-  {name:"Andres",F:6.5,M:7,B:6.5,TP:6,S:6.5,GK:7.5,GKW:7.5},
-  {name:"Ariel (Mena)",F:6,M:5.5,B:7.5,TP:6.5,S:6.5,GK:5,GKW:5},
-  {name:"Bruno",F:6.5,M:7.5,B:6.5,TP:6,S:6.5,GK:4,GKW:4},
-  {name:"Cabra",F:6,M:6.5,B:6.5,TP:6,S:7,GK:5,GKW:5},
-  {name:"Clement",F:6.5,M:6,B:7.5,TP:6,S:6,GK:5,GKW:5},
-  {name:"Daniel",F:5,M:5,B:6,TP:6,S:5,GK:5,GKW:7},
-  {name:"Eduardo Be",F:6.5,M:7,B:6,TP:6,S:6.5,GK:4,GKW:2.5},
-  {name:"Eduardo C",F:6,M:7,B:7,TP:6,S:6,GK:5,GKW:5},
-  {name:"Eduardo GF",F:7.5,M:6,B:6,TP:6,S:7,GK:4,GKW:2},
-  {name:"Ellis",F:7,M:7,B:6,TP:7,S:6.5,GK:5,GKW:6},
-  {name:"Enrique",F:5,M:6,B:7,TP:6,S:6,GK:8,GKW:8},
-  {name:"Felipe E.",F:6.5,M:7,B:6.5,TP:6,S:7,GK:4,GKW:4},
-  {name:"Gabriel (Uru)",F:6.5,M:7,B:7,TP:6,S:6,GK:4.5,GKW:4.5},
-  {name:"Jaime",F:7.5,M:8,B:7,TP:6.5,S:7,GK:4,GKW:2},
-  {name:"Jeremy",F:7,M:7,B:6.5,TP:6,S:6.5,GK:5,GKW:5},
-  {name:"Joe A.",F:7,M:7,B:5.5,TP:5.5,S:6,GK:4,GKW:5},
-  {name:"Joel",F:7,M:7.5,B:6,TP:6,S:6.5,GK:4,GKW:2},
-  {name:"Jonathan A",F:6,M:7,B:7,TP:6,S:6.5,GK:4,GKW:4.5},
-  {name:"Jonathan E",F:7.5,M:6.5,B:6.5,TP:6,S:6.5,GK:4,GKW:3},
-  {name:"Joseph (Chino)",F:6.5,M:7.5,B:7.5,TP:7,S:7,GK:5,GKW:3},
-  {name:"Juan (Peta)",F:6,M:7,B:7,TP:6,S:6.5,GK:5,GKW:5},
-  {name:"Lucas",F:6,M:7,B:7,TP:6,S:6.5,GK:5,GKW:2},
-  {name:"Marcelo",F:6,M:5.5,B:7.5,TP:6.5,S:7,GK:7,GKW:7},
-  {name:"Marcos",F:5,M:6,B:7,TP:5,S:5,GK:5,GKW:6.5},
-  {name:"Martin",F:6.5,M:5,B:6.5,TP:5,S:5,GK:8,GKW:8},
-  {name:"Mauricio",F:5,M:6,B:7,TP:5,S:5,GK:5,GKW:7},
-  {name:"Rafael L",F:6,M:6.5,B:6.5,TP:7,S:6,GK:6,GKW:6},
-  {name:"Ronny",F:6,M:7,B:6,TP:6,S:7,GK:6,GKW:6},
-  {name:"Sidney",F:5,M:6,B:7,TP:5,S:5,GK:5,GKW:5},
-  {name:"Stuart",F:8,M:6.5,B:6,TP:7,S:6,GK:6.5,GKW:6.5},
-  {name:"Vladimir",F:7,M:6.5,B:7,TP:6,S:6.5,GK:4,GKW:2},
+  {name:"Agustin",        pos:"M", F:7,  M:8,  B:6.5,GK:4,  GKW:3,  TP:8,  S:7  },
+  {name:"Alex",           pos:"M", F:7,  M:7,  B:6,  GK:4,  GKW:4,  TP:6,  S:6  },
+  {name:"Andres",         pos:"B", F:6.5,M:7,  B:6.5,GK:7.5,GKW:7.5,TP:6.5,S:6.5},
+  {name:"Ariel (Mena)",   pos:"B", F:6,  M:5.5,B:8,  GK:5,  GKW:5,  TP:6.5,S:6.5},
+  {name:"Bruno",          pos:"B", F:6.5,M:7,  B:7,  GK:4,  GKW:4,  TP:6.5,S:6.5},
+  {name:"Clement",        pos:"B", F:6.5,M:5.5,B:7.5,GK:5,  GKW:5,  TP:6,  S:6  },
+  {name:"Daniel",         pos:"B", F:4.5,M:5,  B:5.5,GK:5,  GKW:7,  TP:6,  S:5  },
+  {name:"Eduardo Be",     pos:"M", F:7,  M:7,  B:6,  GK:4,  GKW:2.5,TP:6.5,S:6.5},
+  {name:"Eduardo C",      pos:"B", F:6,  M:7,  B:7.5,GK:5,  GKW:5,  TP:6,  S:6  },
+  {name:"Eduardo GF",     pos:"F", F:7.5,M:5.5,B:6,  GK:4,  GKW:2,  TP:6,  S:7  },
+  {name:"Ellis",          pos:"M", F:7,  M:7.5,B:6,  GK:5,  GKW:6,  TP:7,  S:6.5},
+  {name:"Enrique",        pos:"GK",F:4.5,M:5,  B:7.5,GK:8,  GKW:8,  TP:6,  S:6  },
+  {name:"Federico",       pos:"F", F:7.5,M:7,  B:6.5,GK:5,  GKW:5,  TP:7,  S:7  },
+  {name:"Felipe E.",      pos:"M", F:6.5,M:7,  B:6.5,GK:4,  GKW:4,  TP:6,  S:7.5},
+  {name:"Gabriel (Uru)",  pos:"B", F:7,  M:7,  B:7.5,GK:4.5,GKW:4.5,TP:6,  S:6  },
+  {name:"Invitado #1",    pos:"M", F:6.5,M:6.5,B:6.5,GK:5,  GKW:5,  TP:4,  S:6  },
+  {name:"Jaime",          pos:"F", F:8,  M:8,  B:7,  GK:4,  GKW:2,  TP:6.5,S:7.5},
+  {name:"Jeremy",         pos:"M", F:7,  M:6.5,B:6.5,GK:5,  GKW:5,  TP:6,  S:6.5},
+  {name:"Joe A.",         pos:"F", F:7,  M:7,  B:5.5,GK:4,  GKW:5,  TP:6,  S:6  },
+  {name:"Joel",           pos:"M", F:7,  M:7.5,B:6,  GK:4,  GKW:2,  TP:6.5,S:6.5},
+  {name:"Jonathan A",     pos:"B", F:6,  M:7,  B:7,  GK:4,  GKW:4.5,TP:6,  S:6.5},
+  {name:"Jonathan E",     pos:"F", F:7.5,M:6.5,B:7,  GK:4,  GKW:3,  TP:6,  S:6.5},
+  {name:"Joseph (Chino)", pos:"B", F:6.5,M:7.5,B:8,  GK:5,  GKW:3,  TP:7,  S:7.5},
+  {name:"Juan (Peta)",    pos:"B", F:6,  M:6.5,B:7.5,GK:5,  GKW:5,  TP:6,  S:6.5},
+  {name:"Lucas",          pos:"B", F:6,  M:6,  B:7,  GK:5,  GKW:2,  TP:6,  S:6.5},
+  {name:"Marcelo",        pos:"B", F:6,  M:5.5,B:8,  GK:7,  GKW:7,  TP:6.5,S:7.5},
+  {name:"Marcelo (Cabra)",pos:"M", F:6,  M:6.5,B:6.5,GK:5,  GKW:5,  TP:6,  S:7  },
+  {name:"Marcos",         pos:"B", F:4.5,M:5.5,B:7,  GK:5,  GKW:6.5,TP:5,  S:5  },
+  {name:"Martin",         pos:"GK",F:7,  M:5,  B:6.5,GK:8,  GKW:8,  TP:6,  S:6.5},
+  {name:"Martin Benzaquen",pos:"B",F:6,  M:6.5,B:8,  GK:5,  GKW:5,  TP:6,  S:6  },
+  {name:"Mauricio",       pos:"B", F:5,  M:5.5,B:7,  GK:5,  GKW:7,  TP:5,  S:5  },
+  {name:"Rafael Braun",   pos:"F", F:7,  M:6,  B:5.5,GK:5,  GKW:5,  TP:5,  S:5.5},
+  {name:"Rafael L",       pos:"M", F:6,  M:6.5,B:6.5,GK:6,  GKW:6,  TP:6.5,S:6  },
+  {name:"Ricardo K.",     pos:"M", F:6,  M:6.5,B:6,  GK:5,  GKW:5,  TP:5.5,S:7  },
+  {name:"Roberto",        pos:"GK",F:5.5,M:5.5,B:8,  GK:8.5,GKW:8.5,TP:7,  S:7  },
+  {name:"Ronny",          pos:"M", F:6.5,M:6,  B:6.5,GK:6,  GKW:6,  TP:6,  S:7  },
+  {name:"Sidney",         pos:"B", F:5,  M:5,  B:7,  GK:5,  GKW:5,  TP:5,  S:5  },
+  {name:"Stuart",         pos:"F", F:8.5,M:6.5,B:6.5,GK:6.5,GKW:6.5,TP:7.5,S:6  },
+  {name:"Tommy",          pos:"M", F:7,  M:7.5,B:5,  GK:4,  GKW:4,  TP:5,  S:5.5},
+  {name:"Vladimir",       pos:"B", F:7,  M:6.5,B:7,  GK:4,  GKW:2,  TP:6,  S:6.5},
 ];
 
-const KEY='soccerBuilder_v4';
-const WKEY='soccerWeights_v2';
-let PLAYERS=[],selected=new Set(),teamAssign={},gameSize=12,editIdx=null;
-// teamAssign: { playerIndex: 'B' | 'W' }  (B=Black, W=White, undefined=auto)
+// ─────────────────────────────────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────────────────────────────────
+const KEY='soccerBuilder_v6';
+const GH_KEY='soccerGhConfig_v1';
+let PLAYERS=[], selected=new Set(), teamAssign={}, editIdx=null;
+// teamAssign[playerIndex] = 'B' | 'W'   (pre-assign to Black or White team)
 
-// ── Weights ───────────────────────────────────────────────────────────
-const DEFAULT_WEIGHTS={avg:25,F:13,M:13,B:13,TP:13,S:13,GK:10};
-let W={...DEFAULT_WEIGHTS};
-
-const PRESETS={
-  balanced:{avg:25,F:13,M:13,B:13,TP:13,S:13,GK:10},
-  attack:  {avg:15,F:35,M:20,B:8,TP:8,S:5,GK:9},
-  defense: {avg:15,F:8,M:12,B:35,TP:8,S:8,GK:14},
-  stamina: {avg:15,F:8,M:13,B:13,TP:8,S:30,GK:13},
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+// pos values: 'F' | 'M' | 'B' | 'GK'
+const POS_LABEL={F:'FWD', M:'MID', B:'DEF', GK:'GK'};
+const POS_STYLE={
+  F:{bg:'var(--fwd-bg)',c:'var(--fwd-c)'},
+  M:{bg:'var(--mid-bg)',c:'var(--mid-c)'},
+  B:{bg:'var(--def-bg)',c:'var(--def-c)'},
+  GK:{bg:'var(--gk-bg)', c:'var(--gk-c)'},
 };
+// Field average (used for balance score; excludes GK stats which are separate)
+const fieldAvg = p => (p.F + p.M + p.B + p.TP + p.S) / 5;
+// GK effectiveness: geometric mean of skill × willingness
+const gkEff = p => Math.sqrt(p.GK * p.GKW);
+// Team average
+const tAvg = t => t.reduce((a,p) => a + fieldAvg(p), 0) / t.length;
+// Team average of a specific stat
+const tStat = (t,k) => t.reduce((a,p) => a + p[k], 0) / t.length;
+// Role counts helper
+function roleCounts(team){
+  const c={F:0,M:0,B:0,GK:0};
+  team.forEach(p => c[p.pos]++);
+  return c;
+}
+// Bar colour by diff magnitude
+const barColor = d => d < 0.3 ? '#1D9E75' : d < 0.8 ? '#d4860b' : '#c0392b';
 
-function saveWeights(){try{localStorage.setItem(WKEY,JSON.stringify(W));}catch(e){}}
-function loadWeights(){
-  try{
-    const r=localStorage.getItem(WKEY);
-    if(r){const w=JSON.parse(r);if(w&&typeof w.avg==='number'){W={...DEFAULT_WEIGHTS,...w};return;}}
-  }catch(e){}
-  W={...DEFAULT_WEIGHTS};
-}
-function applyWeightsToUI(){
-  const ids={avg:'w-avg',F:'w-f',M:'w-m',B:'w-b',TP:'w-tp',S:'w-st',GK:'w-gk'};
-  const lbls={avg:'w-lbl-avg',F:'w-lbl-f',M:'w-lbl-m',B:'w-lbl-b',TP:'w-lbl-tp',S:'w-lbl-st',GK:'w-lbl-gk'};
-  Object.keys(ids).forEach(k=>{
-    document.getElementById(ids[k]).value=W[k];
-    document.getElementById(lbls[k]).textContent=W[k]+'%';
-  });
-  updateTotal();refreshPresetHighlight();
-}
-function onWeightChange(){
-  const ids={avg:'w-avg',F:'w-f',M:'w-m',B:'w-b',TP:'w-tp',S:'w-st',GK:'w-gk'};
-  const lbls={avg:'w-lbl-avg',F:'w-lbl-f',M:'w-lbl-m',B:'w-lbl-b',TP:'w-lbl-tp',S:'w-lbl-st',GK:'w-lbl-gk'};
-  Object.keys(ids).forEach(k=>{
-    W[k]=+document.getElementById(ids[k]).value;
-    document.getElementById(lbls[k]).textContent=W[k]+'%';
-  });
-  updateTotal();refreshPresetHighlight();saveWeights();
-}
-function updateTotal(){
-  const total=Object.values(W).reduce((a,v)=>a+v,0);
-  const el=document.getElementById('w-total');
-  el.textContent=total+'%';
-  el.className='total-val '+(total===100?'ok':'bad');
-  document.getElementById('gen-btn').disabled=(selected.size!==gameSize||total!==100);
-}
-function normalizeWeights(){
-  const total=Object.values(W).reduce((a,v)=>a+v,0);
-  if(total===0){W={...DEFAULT_WEIGHTS};}
-  else{const keys=Object.keys(W);let rem=100;keys.forEach((k,i)=>{W[k]=i<keys.length-1?Math.round(W[k]/total*100):rem;rem-=W[k];});}
-  applyWeightsToUI();saveWeights();
-}
-function applyPreset(name){
-  W={...PRESETS[name]};
-  applyWeightsToUI();saveWeights();
-}
-function refreshPresetHighlight(){
-  Object.keys(PRESETS).forEach(name=>{
-    const el=document.getElementById('preset-'+name);
-    if(!el)return;
-    const match=Object.keys(PRESETS[name]).every(k=>W[k]===PRESETS[name][k]);
-    el.classList.toggle('active-preset',match);
-  });
-}
-
-// ── Persistence ───────────────────────────────────────────────────────
-function save(){
-  try{localStorage.setItem(KEY,JSON.stringify(PLAYERS));flashSaved();}catch(e){}
-}
-function load(){
-  try{
-    const r=localStorage.getItem(KEY);
-    if(r){const p=JSON.parse(r);if(Array.isArray(p)&&p.length){
-      PLAYERS=p.map(x=>({...x,S:x.S??x.STA??7,GK:x.GK??5,GKW:x.GKW??5}));return;
-    }}
-  }catch(e){}
-  PLAYERS=DEFAULTS.map(p=>({...p}));
-}
-function resetRoster(){
-  if(!confirm('Reset to the original roster? All edits will be lost.'))return;
-  localStorage.removeItem(KEY);location.reload();
-}
-function flashSaved(){
-  const b=document.getElementById('saved-badge');
-  b.style.opacity='1';clearTimeout(b._t);
-  b._t=setTimeout(()=>b.style.opacity='0',2000);
-}
-
-// ── Helpers ───────────────────────────────────────────────────────────
-const gkEff=p=>Math.sqrt(p.GK*p.GKW);  // geometric mean: both must be high to matter
-const avg=p=>(p.F+p.M+p.B+p.TP+p.S)/5; // avg excludes GK (GK handled separately in score)
-function role(p){return Object.entries({F:p.F,M:p.M,B:p.B}).sort((a,b)=>b[1]-a[1])[0][0];}
-const RL={F:'FWD',M:'MID',B:'DEF'};
-const RC={F:{bg:'var(--fwd-bg)',c:'var(--fwd-c)'},M:{bg:'var(--mid-bg)',c:'var(--mid-c)'},B:{bg:'var(--def-bg)',c:'var(--def-c)'}};
-const bc=d=>d<.3?'#1D9E75':d<.7?'#d4860b':'#c0392b';
-const tAvg=t=>t.reduce((a,p)=>a+avg(p),0)/t.length;
-const tPos=(t,k)=>k==='GK'?t.reduce((a,p)=>a+gkEff(p),0)/t.length:t.reduce((a,p)=>a+p[k],0)/t.length;
-const pct=d=>Math.max(0,Math.min(100,(1-d/2)*100)).toFixed(0)+'%';
-
-// ── Tabs ──────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// TABS
+// ─────────────────────────────────────────────────────────────────────────────
 function showTab(t){
   ['select','teams','roster','settings'].forEach(id=>{
-    document.getElementById('panel-'+id).classList.toggle('active',id===t);
-    document.getElementById('nav-'+id).classList.toggle('active',id===t);
+    document.getElementById('panel-'+id).classList.toggle('active', id===t);
+    document.getElementById('nav-'+id).classList.toggle('active', id===t);
   });
   document.getElementById('scroller').scrollTop=0;
-  if(t==='roster')renderRoster();
+  if(t==='roster') renderRoster();
 }
 
-// ── Player list ───────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// PLAYER LIST (Select tab)
+// ─────────────────────────────────────────────────────────────────────────────
 function renderList(){
-  const q=(document.getElementById('search').value||'').toLowerCase();
-  document.getElementById('plist').innerHTML=PLAYERS.map((p,i)=>{
-    if(q&&!p.name.toLowerCase().includes(q))return'';
-    const s=selected.has(i),r=role(p),rc=RC[r];
-    const ta=teamAssign[i]; // 'B', 'W', or undefined
-    const assignHtml=s?`
-      <div class="team-assign" onclick="event.stopPropagation()">
-        <div>
-          <div class="ta-btn${ta==='B'?' black-on':''}" onclick="setTeam(${i},'B')" title="Assign to Black">⚫</div>
-        </div>
-        <div>
-          <div class="ta-btn${ta==='W'?' white-on':''}" onclick="setTeam(${i},'W')" title="Assign to White">⚪</div>
-        </div>
-      </div>`:'';
-    return`<div class="prow${s?' sel':''}" onclick="toggle(${i})">
-      <div class="pcheck">${s?'✓':''}</div>
+  const q = (document.getElementById('search').value||'').toLowerCase();
+  document.getElementById('plist').innerHTML = PLAYERS.map((p,i)=>{
+    if(q && !p.name.toLowerCase().includes(q)) return '';
+    const sel = selected.has(i);
+    const ps  = POS_STYLE[p.pos];
+    const ta  = teamAssign[i];
+
+    // Team pre-assign buttons (only visible when selected)
+    const taHtml = sel ? `
+      <div class="ta-wrap" onclick="event.stopPropagation()">
+        <div class="ta-btn${ta==='B'?' b-on':''}" onclick="setTeam(${i},'B')" title="Assign to Black">⚫</div>
+        <div class="ta-btn${ta==='W'?' w-on':''}" onclick="setTeam(${i},'W')" title="Assign to White">⚪</div>
+      </div>` : '';
+
+    return `<div class="prow${sel?' sel':''}" onclick="toggle(${i})">
+      <div class="pcheck">${sel?'✓':''}</div>
       <div class="pinfo">
         <div class="pname">${p.name}</div>
         <div class="chips">
           <span class="chip cf">F ${p.F}</span>
           <span class="chip cm">M ${p.M}</span>
           <span class="chip cb">D ${p.B}</span>
+          <span class="chip cgk">🥅${p.GK}/${p.GKW}</span>
           <span class="chip ctp">TP ${p.TP}</span>
           <span class="chip cst">⚡${p.S}</span>
-          <span class="chip cgk">🧤${p.GK}</span>
-          <span class="chip cgkw">🙋${p.GKW}</span>
         </div>
       </div>
       <div class="pright">
-        ${assignHtml}
-        <span class="avg-pill">${avg(p).toFixed(1)}</span>
-        <span class="role-pill" style="background:${rc.bg};color:${rc.c}">${RL[r]}</span>
+        ${taHtml}
+        <span class="avg-pill">${fieldAvg(p).toFixed(1)}</span>
+        <span class="role-pill" style="background:${ps.bg};color:${ps.c}">${POS_LABEL[p.pos]}</span>
         <div class="row-acts" onclick="event.stopPropagation()">
           <div class="ibtn" onclick="openModal(${i})">✏️</div>
           <div class="ibtn del" onclick="delPlayer(${i})">🗑</div>
@@ -768,451 +545,577 @@ function renderList(){
       </div>
     </div>`;
   }).join('');
-  const n=selected.size;
-  document.getElementById('sel-count').textContent=n;
-  const nb=document.getElementById('nb-sel');
-  nb.textContent=n;nb.className='nbadge'+(n?'':' zero');
-  document.getElementById('gen-btn').disabled=(n!==gameSize||Object.values(W).reduce((a,v)=>a+v,0)!==100);
-  checkWarn();
-  updateAssignCounts();
+
+  const n = selected.size;
+  document.getElementById('sel-count').textContent = n;
+  const nb = document.getElementById('nb-sel');
+  nb.textContent = n; nb.className = 'nbadge' + (n ? '' : ' zero');
+
+  // Pill: show team sizes; highlight red if odd
+  const pill = document.getElementById('count-pill');
+  const tpill = document.getElementById('teams-pill');
+  const even = n >= 4 && n % 2 === 0;
+  pill.className = 'sel-pill' + (n > 0 && n % 2 !== 0 ? ' odd' : '');
+  if(n >= 2){ tpill.style.display=''; document.getElementById('team-n').textContent = n/2; }
+  else tpill.style.display='none';
+
+  document.getElementById('gen-btn').disabled = !even;
+  updateWarn();
+  updateAssignInfo();
 }
 
 function toggle(i){
-  if(selected.has(i)){selected.delete(i);delete teamAssign[i];}
+  if(selected.has(i)){ selected.delete(i); delete teamAssign[i]; }
   else selected.add(i);
   renderList();
 }
-function setTeam(i,team){
-  // clicking same button again clears the assignment
-  if(teamAssign[i]===team)delete teamAssign[i];
-  else teamAssign[i]=team;
+
+function setTeam(i, team){
+  teamAssign[i] = (teamAssign[i]===team) ? undefined : team;
+  if(teamAssign[i]===undefined) delete teamAssign[i];
   renderList();
 }
-function updateAssignCounts(){
-  const bCount=Object.values(teamAssign).filter(v=>v==='B').length;
-  const wCount=Object.values(teamAssign).filter(v=>v==='W').length;
-  const half=gameSize/2;
-  const el=document.getElementById('assign-info');
-  if(!el)return;
-  if(bCount===0&&wCount===0){el.style.display='none';return;}
-  el.style.display='block';
-  const issues=[];
-  if(bCount>half)issues.push(`Too many on ⚫ Black (${bCount}/${half})`);
-  if(wCount>half)issues.push(`Too many on ⚪ White (${wCount}/${half})`);
-  el.style.background=issues.length?'var(--red-light)':'var(--amber-light)';
-  el.style.borderColor=issues.length?'#f5c6c2':'#f0c070';
-  el.style.color=issues.length?'var(--red)':'var(--amber)';
-  el.textContent=issues.length?'⚠ '+issues.join(' · '):`⚫ Black: ${bCount} fixed · ⚪ White: ${wCount} fixed · ${gameSize-bCount-wCount} auto`;
-}
 
-function onSizeChange(){gameSize=+document.getElementById('size-sel').value;renderList();}
-
-function checkWarn(){
-  if(selected.size!==gameSize){document.getElementById('warn').style.display='none';return;}
-  const roles=[...selected].map(i=>role(PLAYERS[i]));
-  const cnt={F:roles.filter(r=>r==='F').length,M:roles.filter(r=>r==='M').length,B:roles.filter(r=>r==='B').length};
-  const half=gameSize/2;
-  const issues=[];
-  // Each team needs at least 1 of each role — so pool needs at least 2
-  if(cnt.F<2)issues.push(`only ${cnt.F} forward${cnt.F===1?'':'s'}`);
-  if(cnt.M<2)issues.push(`only ${cnt.M} midfielder${cnt.M===1?'':'s'}`);
-  if(cnt.B<2)issues.push(`only ${cnt.B} defender${cnt.B===1?'':'s'}`);
-  const w=document.getElementById('warn');
-  if(issues.length){w.style.display='block';w.textContent='⚠ '+issues.join(', ')+' — each team may lack a position.';}
+function updateWarn(){
+  const w = document.getElementById('warn');
+  const n = selected.size;
+  if(n === 0){ w.style.display='none'; return; }
+  if(n % 2 !== 0){ w.style.display='block'; w.textContent='⚠ Select an even number of players — you have '+n+'.'; return; }
+  if(n < 4){ w.style.display='none'; return; }
+  const counts = {F:0,M:0,B:0,GK:0};
+  [...selected].forEach(i => counts[PLAYERS[i].pos]++);
+  const issues = [];
+  if(counts.GK < 2) issues.push(`only ${counts.GK} goalkeeper${counts.GK===1?'':'s'} (need 2 for one each)`);
+  if(counts.F  < 2) issues.push(`only ${counts.F} forward${counts.F===1?'':'s'}`);
+  if(counts.M  < 2) issues.push(`only ${counts.M} midfielder${counts.M===1?'':'s'}`);
+  if(counts.B  < 2) issues.push(`only ${counts.B} defender${counts.B===1?'':'s'}`);
+  if(issues.length){ w.style.display='block'; w.textContent='⚠ ' + issues.join(' · '); }
   else w.style.display='none';
 }
 
-// ── Team generation ───────────────────────────────────────────────────
-
-function roleCounts(team){
-  const c={F:0,M:0,B:0};
-  team.forEach(p=>c[role(p)]++);
-  return c;
+function updateAssignInfo(){
+  const el = document.getElementById('assign-info');
+  const bN = Object.values(teamAssign).filter(v=>v==='B').length;
+  const wN = Object.values(teamAssign).filter(v=>v==='W').length;
+  if(bN===0 && wN===0){ el.style.display='none'; return; }
+  const half = Math.floor(selected.size/2);
+  const issues = [];
+  if(bN > half) issues.push(`⚫ Black has ${bN} (max ${half})`);
+  if(wN > half) issues.push(`⚪ White has ${wN} (max ${half})`);
+  el.style.display = 'block';
+  el.style.background = issues.length ? 'var(--red-light)' : 'var(--amber-light)';
+  el.style.borderColor = issues.length ? '#f5c6c2' : '#f0c070';
+  el.style.color = issues.length ? 'var(--red)' : 'var(--amber)';
+  el.textContent = issues.length
+    ? '⚠ ' + issues.join(' · ')
+    : `⚫ ${bN} fixed to Black · ⚪ ${wN} fixed to White · ${selected.size-bN-wN} auto`;
 }
 
-// Secondary score: used only to compare splits with equal role counts
-// Lower = better balanced
-function score(t1,t2){
-  const stamDiff = Math.abs(
-    t1.reduce((a,p)=>a+p.S,0)/t1.length -
-    t2.reduce((a,p)=>a+p.S,0)/t2.length
+// ─────────────────────────────────────────────────────────────────────────────
+// TEAM GENERATION ALGORITHM
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Balance score between two teams — lower is better.
+// Only called on pairs with equal role counts, so no positional penalty needed.
+function score(t1, t2){
+  const avgD  = Math.abs(tAvg(t1) - tAvg(t2));
+  const stamD = Math.abs(tStat(t1,'S') - tStat(t2,'S'));
+  const fwdD  = Math.abs(tStat(t1,'F') - tStat(t2,'F'));
+  const midD  = Math.abs(tStat(t1,'M') - tStat(t2,'M'));
+  const defD  = Math.abs(tStat(t1,'B') - tStat(t2,'B'));
+  const gkD   = Math.abs(
+    t1.reduce((a,p)=>a+gkEff(p),0)/t1.length -
+    t2.reduce((a,p)=>a+gkEff(p),0)/t2.length
   );
-  const avgDiff = Math.abs(tAvg(t1)-tAvg(t2));
-  const total=Object.values(W).reduce((a,v)=>a+v,0)||100;
-  const skillBalance =
-    (Math.abs(tPos(t1,'F') -tPos(t2,'F')) *(W.F /total))
-   +(Math.abs(tPos(t1,'M') -tPos(t2,'M')) *(W.M /total))
-   +(Math.abs(tPos(t1,'B') -tPos(t2,'B')) *(W.B /total))
-   +(Math.abs(tPos(t1,'TP')-tPos(t2,'TP'))*(W.TP/total))
-   +(Math.abs(tPos(t1,'GK')-tPos(t2,'GK'))*(W.GK/total));
-  // Stamina and avg weighted highest; skills as tiebreaker
-  return stamDiff*2.5 + avgDiff*2.0 + skillBalance;
+  // Priority: overall avg > stamina > positions > gk backup
+  return avgD*3.0 + stamD*2.5 + (fwdD+midD+defD)*0.8 + gkD*0.5;
 }
 
-function combos(arr,k){
+// All combinations of k items from arr
+function combos(arr, k){
   const res=[];
-  function h(s,c){
-    if(c.length===k){res.push([...c]);return;}
-    for(let i=s;i<arr.length;i++){c.push(arr[i]);h(i+1,c);c.pop();}
+  function go(start, cur){
+    if(cur.length===k){ res.push([...cur]); return; }
+    for(let i=start;i<arr.length;i++){ cur.push(arr[i]); go(i+1,cur); cur.pop(); }
   }
-  h(0,[]);return res;
+  go(0,[]);
+  return res;
 }
 
-// Split a group of same-role players as evenly as possible (skill-balanced)
-function splitGroup(players){
-  // Try all combos of ceil(n/2) and pick most balanced by avg
-  const n=players.length, half=Math.floor(n/2);
-  if(n===0)return{a:[],b:[]};
-  if(n===1)return{a:players,b:[]};
-  let bA=players.slice(0,half),bB=players.slice(half),bS=Infinity;
-  for(const a of combos(players,half)){
-    const b=players.filter(p=>!a.includes(p));
-    const s=Math.abs(
-      a.reduce((sum,p)=>sum+avg(p),0)/a.length -
-      b.reduce((sum,p)=>sum+avg(p),0)/b.length
-    ) + Math.abs(
-      a.reduce((sum,p)=>sum+p.S,0)/a.length -
-      b.reduce((sum,p)=>sum+p.S,0)/b.length
-    );
-    if(s<bS){bS=s;bA=[...a];bB=[...b];}
+// Split a same-position group into two halves.
+// When the group is odd, one team gets ceil, other gets floor — tracked via 'extras'
+function splitGroup(group){
+  const n = group.length;
+  if(n===0) return {a:[],b:[]};
+  const halfA = Math.ceil(n/2);   // team A gets the extra player when odd
+  const halfB = Math.floor(n/2);
+  if(halfA===halfB) {
+    // Even group — fully balanced split by avg+stamina
+    const sorted = [...group].sort((a,b)=>fieldAvg(b)-fieldAvg(a));
+    let bestA=sorted.slice(0,halfA), bestB=sorted.slice(halfA), bestS=Infinity;
+    for(const a of combos(sorted, halfA)){
+      const b = sorted.filter(p=>!a.includes(p));
+      const s = Math.abs(a.reduce((x,p)=>x+fieldAvg(p),0)/a.length - b.reduce((x,p)=>x+fieldAvg(p),0)/b.length)
+              + Math.abs(a.reduce((x,p)=>x+p.S,0)/a.length       - b.reduce((x,p)=>x+p.S,0)/b.length);
+      if(s<bestS){ bestS=s; bestA=[...a]; bestB=[...b]; }
+      if(bestS<0.01) break;
+    }
+    return {a:bestA, b:bestB};
+  } else {
+    // Odd group — just sort by avg and interleave (A gets best, B gets second, A gets third...)
+    const sorted = [...group].sort((a,b)=>fieldAvg(b)-fieldAvg(a));
+    const a=[], b=[];
+    sorted.forEach((p,i)=>{ if(i%2===0) a.push(p); else b.push(p); });
+    return {a,b};
   }
-  return{a:bA,b:bB};
 }
 
 function generate(){
-  const players=[...selected].map(i=>({...PLAYERS[i],_idx:i}));
-  const half=players.length/2;
+  try{
+    const players = [...selected].map(i=>({...PLAYERS[i], _idx:i}));
+    const total = players.length;
+    const half  = total / 2;
 
-  const fixedBlack=players.filter(p=>teamAssign[p._idx]==='B');
-  const fixedWhite=players.filter(p=>teamAssign[p._idx]==='W');
-  const free=players.filter(p=>!teamAssign[p._idx]);
+    const fixedB = players.filter(p => teamAssign[p._idx]==='B');
+    const fixedW = players.filter(p => teamAssign[p._idx]==='W');
+    const free   = players.filter(p => !teamAssign[p._idx]);
 
-  if(fixedBlack.length>half||fixedWhite.length>half){
-    alert(`Too many players pre-assigned to one team!\nMax per team: ${half}`);return;
-  }
-
-  // --- PHASE 1: Split free players by role, balance within each role ---
-  const byRole={F:[],M:[],B:[]};
-  free.forEach(p=>byRole[role(p)].push(p));
-
-  // Sort each group by avg desc so combos start from the best distribution
-  Object.values(byRole).forEach(g=>g.sort((a,b)=>avg(b)-avg(a)));
-
-  // Split each role group evenly (skill-balanced)
-  const splits={};
-  ['F','M','B'].forEach(r=>{splits[r]=splitGroup(byRole[r]);});
-
-  // Build base teams from role splits
-  let t1=[...fixedBlack,...splits.F.a,...splits.M.a,...splits.B.a];
-  let t2=[...fixedWhite,...splits.F.b,...splits.M.b,...splits.B.b];
-
-  // --- PHASE 2: Fine-tune by trying swaps of same-role players ---
-  // This preserves role counts while improving stamina/avg balance
-  let bS=score(t1,t2), bT1=[...t1], bT2=[...t2];
-  const improved=true;
-  for(let pass=0;pass<3;pass++){
-    for(let i=0;i<t1.length;i++){
-      for(let j=0;j<t2.length;j++){
-        if(role(t1[i])!==role(t2[j]))continue; // only swap same role
-        const nt1=[...t1]; const nt2=[...t2];
-        [nt1[i],nt2[j]]=[nt2[j],nt1[i]];
-        const s=score(nt1,nt2);
-        if(s<bS){bS=s;bT1=[...nt1];bT2=[...nt2];t1=[...nt1];t2=[...nt2];}
-      }
+    if(fixedB.length > half || fixedW.length > half){
+      alert(`Too many players pre-assigned to one team! Max per team: ${half}`); return;
     }
-  }
 
-  renderTeams(bT1,bT2);showTab('teams');
+    const needB = half - fixedB.length;
+    const needW = half - fixedW.length;
+    // needB + needW === free.length
+
+    // ── PHASE 1: Split each position group, respecting team size targets ─
+    const byPos = {F:[], M:[], B:[], GK:[]};
+    free.forEach(p => byPos[p.pos].push(p));
+
+    // Use combos to find the best assignment of free players into
+    // exactly needB slots for Black and needW slots for White,
+    // while keeping position counts as equal as possible.
+    // For small free pools (≤18) do exact search; larger → greedy.
+    let freeForB, freeForW;
+
+    if(free.length <= 18){
+      // Exact: try all ways to choose needB players from free for Black
+      let bestS = Infinity;
+      freeForB = free.slice(0, needB);
+      freeForW = free.slice(needB);
+      for(const b of combos(free, needB)){
+        const w = free.filter(p=>!b.includes(p));
+        const t1c = [...fixedB,...b], t2c = [...fixedW,...w];
+        const s = score(t1c, t2c)
+                + posImbalancePenalty(t1c, t2c);
+        if(s < bestS){ bestS=s; freeForB=[...b]; freeForW=[...w]; }
+      }
+    } else {
+      // Greedy for large pools: split each pos group then move extras
+      const splits = {};
+      ['F','M','B','GK'].forEach(pos => { splits[pos] = splitGroup(byPos[pos]); });
+      freeForB = [...splits.F.a, ...splits.M.a, ...splits.B.a, ...splits.GK.a];
+      freeForW = [...splits.F.b, ...splits.M.b, ...splits.B.b, ...splits.GK.b];
+      // Move players between pools until sizes are correct
+      while(freeForB.length > needB){ freeForW.push(freeForB.pop()); }
+      while(freeForW.length > needW){ freeForB.push(freeForW.pop()); }
+    }
+
+    let t1 = [...fixedB, ...freeForB];
+    let t2 = [...fixedW, ...freeForW];
+
+    // Sanity check
+    if(t1.length !== half || t2.length !== half){
+      throw new Error(`Size mismatch after split: ${t1.length} vs ${t2.length} (expected ${half} each)`);
+    }
+
+    // ── PHASE 2: Same-position swaps to fine-tune balance ─────────────
+    let best = score(t1,t2) + posImbalancePenalty(t1,t2);
+    let bestT1=[...t1], bestT2=[...t2];
+    for(let pass=0; pass<6; pass++){
+      let improved = false;
+      for(let i=0; i<t1.length; i++){
+        for(let j=0; j<t2.length; j++){
+          if(t1[i].pos !== t2[j].pos) continue;
+          const nt1=[...t1], nt2=[...t2];
+          [nt1[i], nt2[j]] = [nt2[j], nt1[i]];
+          const s = score(nt1,nt2) + posImbalancePenalty(nt1,nt2);
+          if(s < best){ best=s; bestT1=[...nt1]; bestT2=[...nt2]; t1=[...nt1]; t2=[...nt2]; improved=true; }
+        }
+      }
+      if(!improved) break;
+    }
+
+    renderTeams(bestT1, bestT2);
+    showTab('teams');
+  }catch(err){
+    alert('Error: ' + err.message);
+  }
 }
 
-function renderTeams(t1,t2){
-  const s1=tAvg(t1),s2=tAvg(t2),diff=Math.abs(s1-s2);
-  const r1=roleCounts(t1),r2=roleCounts(t2);
+// Penalty for unequal position counts between teams (encourages equal F/M/B/GK)
+function posImbalancePenalty(t1, t2){
+  const r1=roleCounts(t1), r2=roleCounts(t2);
+  return (Math.abs(r1.F-r2.F) + Math.abs(r1.M-r2.M) + Math.abs(r1.B-r2.B) + Math.abs(r1.GK-r2.GK)) * 2.0;
+}
 
-  // Balance bars — positional counts first, then averages
+// ─────────────────────────────────────────────────────────────────────────────
+// RENDER TEAMS
+// ─────────────────────────────────────────────────────────────────────────────
+function renderTeams(t1, t2){
+  const avg1=tAvg(t1), avg2=tAvg(t2);
+  const rc1=roleCounts(t1), rc2=roleCounts(t2);
+
+  // Balance metrics
   const metrics=[
-    {l:'⚔️ Forwards',  v1:r1.F,           v2:r2.F,           isCount:true},
-    {l:'🔄 Midfielders',v1:r1.M,           v2:r2.M,           isCount:true},
-    {l:'🛡 Defenders',  v1:r1.B,           v2:r2.B,           isCount:true},
-    {l:'⚡ Stamina',    v1:tPos(t1,'S'),   v2:tPos(t2,'S'),   isCount:false},
-    {l:'📊 Overall',   v1:s1,             v2:s2,             isCount:false},
-    {l:'🤝 Team Play', v1:tPos(t1,'TP'),  v2:tPos(t2,'TP'),  isCount:false},
-    {l:'🧤 GK',        v1:tPos(t1,'GK'),  v2:tPos(t2,'GK'),  isCount:false},
+    {l:'🥅 Goalkeepers', a:rc1.GK,     b:rc2.GK,     count:true},
+    {l:'⚔️ Forwards',    a:rc1.F,      b:rc2.F,      count:true},
+    {l:'🔄 Midfielders', a:rc1.M,      b:rc2.M,      count:true},
+    {l:'🛡 Defenders',   a:rc1.B,      b:rc2.B,      count:true},
+    {l:'📊 Overall avg', a:avg1,        b:avg2,        count:false},
+    {l:'⚡ Stamina',     a:tStat(t1,'S'),b:tStat(t2,'S'),count:false},
+    {l:'🤝 Team play',   a:tStat(t1,'TP'),b:tStat(t2,'TP'),count:false},
   ];
-  const bars=metrics.map(m=>{
-    const d=Math.abs(m.v1-m.v2);
-    // For counts: difference of 0 = green, 1 = amber, 2+ = red
-    // For averages: same bc() thresholds as before
-    const colour=m.isCount?(d===0?'#1D9E75':d===1?'#d4860b':'#c0392b'):bc(d);
-    const barW=m.isCount
-      ? (d===0?'5%':d===1?'40%':'85%')  // count diff visual
-      : pct(d);
-    return`<div class="bal-row">
+
+  const barsHtml = metrics.map(m=>{
+    const d = Math.abs(m.a - m.b);
+    const color = m.count ? (d===0?'#1D9E75':d===1?'#d4860b':'#c0392b') : barColor(d);
+    const w = m.count ? (d===0?'4%':d===1?'45%':'90%') : Math.max(4,Math.min(95,(1-d/2)*95))+'%';
+    const label = m.count ? `${m.a} · ${m.b}` : `${m.a.toFixed(1)} · ${m.b.toFixed(1)}`;
+    return `<div class="bal-row">
       <div class="bal-lbl">${m.l}</div>
-      <div class="bar-wrap"><div class="bar-fill" style="width:${barW};background:${colour}"></div></div>
-      <div class="bal-sc">${m.isCount?m.v1+'·'+m.v2:m.v1.toFixed(1)+' · '+m.v2.toFixed(1)}</div>
-    </div>`;}).join('');
+      <div class="bar-wrap"><div class="bar-fill" style="width:${w};background:${color}"></div></div>
+      <div class="bal-sc">${label}</div>
+    </div>`;
+  }).join('');
 
-  function gkSection(team){
-    // Sort by GK effective score descending, show top keepers
-    const sorted=[...team].sort((a,b)=>gkEff(b)-gkEff(a));
-    const rows=sorted.map(p=>{
-      const eff=gkEff(p);
-      const stars=eff>=7?'⭐⭐':eff>=5?'⭐':'';
-      return`<div class="gk-player-row">
-        <div class="gk-player-name">${p.name} ${stars}</div>
-        <div class="gk-scores">
-          <span class="gk-badge" style="background:var(--gk-bg);color:var(--gk-c)">Skill ${p.GK}</span>
-          <span class="gk-badge" style="background:var(--gkw-bg);color:var(--gkw-c)">Will. ${p.GKW}</span>
-          <span class="gk-badge" style="background:var(--surface2);color:var(--text2)">eff ${eff.toFixed(1)}</span>
-        </div>
-      </div>`;
-    }).join('');
-    return`<div class="gk-section"><div class="gk-section-title">🧤 Goalkeeper candidates (best first)</div>${rows}</div>`;
-  }
+  // Team card HTML
+  function teamCard(team, isBlack){
+    const byPos={GK:[],F:[],M:[],B:[]};
+    team.forEach(p => byPos[p.pos].push(p));
 
-  function tHTML(team){
-    const by={F:[],M:[],B:[]};team.forEach(p=>by[role(p)].push(p));
-    let h='';
-    [['F','Forwards'],['M','Midfielders'],['B','Defenders']].forEach(([r,lbl])=>{
-      if(!by[r].length)return;
-      h+=`<div class="pos-hdr">${lbl} (${by[r].length})</div>`;
-      by[r].sort((a,b)=>b[r]-a[r]).forEach(p=>{
-        const locked=p._idx!==undefined&&teamAssign[p._idx]?'<span style="font-size:10px;opacity:.6;margin-left:4px;" title="Pre-assigned">🔒</span>':'';
-        h+=`<div class="tprow">
-          <div><div class="tpname">${p.name}${locked}</div><div class="tpstats">F${p.F} M${p.M} D${p.B} TP${p.TP} ⚡${p.S} 🧤${p.GK}/${p.GKW}</div></div>
-          <div class="tpavg">${avg(p).toFixed(1)}</div>
+    let rows='';
+    [['GK','🥅 Goalkeepers'],['F','⚔️ Forwards'],['M','🔄 Midfielders'],['B','🛡 Defenders']].forEach(([pos,lbl])=>{
+      const group = byPos[pos];
+      if(!group.length) return;
+      rows += `<div class="pos-hdr">${lbl} (${group.length})</div>`;
+      group.sort((a,b)=>{
+        if(pos==='GK') return gkEff(b)-gkEff(a);
+        return b[pos]-a[pos];
+      }).forEach(p=>{
+        const lock = teamAssign[p._idx] ? ' 🔒' : '';
+        const stats = pos==='GK'
+          ? `🥅 Skill ${p.GK} · Will. ${p.GKW} · eff ${gkEff(p).toFixed(1)} · ⚡${p.S}`
+          : `F${p.F} M${p.M} D${p.B} TP${p.TP} ⚡${p.S} 🥅${p.GK}/${p.GKW}`;
+        rows += `<div class="tprow">
+          <div>
+            <div class="tpname">${p.name}${lock}</div>
+            <div class="tpstats">${stats}</div>
+          </div>
+          <div class="tpavg">${fieldAvg(p).toFixed(1)}</div>
         </div>`;
       });
     });
-    h+=gkSection(team);
-    return h;
+
+    // GK backup section (only for field players — shows who could go in goal)
+    const gkBackup = [...team].filter(p=>p.pos!=='GK').sort((a,b)=>gkEff(b)-gkEff(a)).slice(0,3);
+    if(gkBackup.length){
+      rows += `<div class="pos-hdr" style="background:var(--gk-bg);color:var(--gk-c)">🧤 GK backup candidates</div>`;
+      gkBackup.forEach(p=>{
+        const eff=gkEff(p);
+        const stars=eff>=7?'⭐⭐':eff>=5?'⭐':'';
+        rows+=`<div class="tprow" style="background:var(--gk-bg)">
+          <div><div class="tpname">${p.name} ${stars}</div>
+            <div class="tpstats">Skill ${p.GK} · Will. ${p.GKW} · eff ${eff.toFixed(1)}</div></div>
+          <div class="tpavg" style="color:var(--gk-c)">${eff.toFixed(1)}</div>
+        </div>`;
+      });
+    }
+
+    const tAvgVal = tAvg(team);
+    const hdClass = isBlack ? 'thead-black' : 'thead-white';
+    const label   = isBlack ? '⚫ Black' : '⚪ White';
+    return `<div class="tcard">
+      <div class="thead ${hdClass}">
+        <div class="thead-title">${label}</div>
+        <div class="thead-avg">avg ${tAvgVal.toFixed(2)} · ${team.length} players</div>
+      </div>
+      <div class="tbody">${rows}</div>
+    </div>`;
   }
+
   document.getElementById('teams-out').innerHTML=`
     <div class="bal-card">
-      <div class="bal-title">⚖ Balance — diff ${diff.toFixed(2)}</div>
-      ${bars}
+      <div class="bal-title">⚖ Balance  ·  avg diff ${Math.abs(avg1-avg2).toFixed(2)}</div>
+      ${barsHtml}
     </div>
     <div class="tstack">
-      <div class="tcard">
-        <div class="thead thead-black"><div class="thead-title">⚫ Black</div><div class="thead-avg">avg ${s1.toFixed(2)}</div></div>
-        <div class="tbody">${tHTML(t1)}</div>
-      </div>
-      <div class="tcard">
-        <div class="thead thead-white"><div class="thead-title">⚪ White</div><div class="thead-avg">avg ${s2.toFixed(2)}</div></div>
-        <div class="tbody">${tHTML(t2)}</div>
-      </div>
+      ${teamCard(t1, true)}
+      ${teamCard(t2, false)}
     </div>
-    <div class="back-wrap"><button onclick="showTab('select')">← Back to Players</button></div>`;
+    <div class="regen-bar">
+      <button class="btn btn-s" onclick="showTab('select')">← Back to Players</button>
+      <button class="btn btn-p" onclick="generate()">↻ Re-generate</button>
+    </div>`;
 }
 
-// ── Roster ────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// ROSTER TAB
+// ─────────────────────────────────────────────────────────────────────────────
 function renderRoster(){
-  document.getElementById('nb-roster').textContent=PLAYERS.length;
-  document.getElementById('rlist').innerHTML=PLAYERS.map((p,i)=>{
-    const r=role(p),rc=RC[r];
-    return`<div class="rrow">
+  document.getElementById('nb-roster').textContent = PLAYERS.length;
+  document.getElementById('rlist').innerHTML = PLAYERS.map((p,i)=>{
+    const ps = POS_STYLE[p.pos];
+    return `<div class="rrow">
       <div class="rinfo">
         <div class="rname">${p.name}</div>
-        <div class="rstats">F${p.F} · M${p.M} · D${p.B} · TP${p.TP} · ⚡${p.S} · 🧤${p.GK}/${p.GKW}</div>
+        <div class="rstats">F${p.F} · M${p.M} · D${p.B} · 🥅${p.GK}/${p.GKW} · TP${p.TP} · ⚡${p.S}</div>
       </div>
       <div class="rright">
-        <span class="role-pill" style="background:${rc.bg};color:${rc.c};font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;">${RL[r]}</span>
-        <span style="font-size:12px;font-weight:700;color:var(--text2);">avg ${avg(p).toFixed(1)}</span>
-        <div style="display:flex;gap:6px;">
-          <div class="ibtn" onclick="openModal(${i})">✏️</div>
-          <div class="ibtn del" onclick="delPlayer(${i})">🗑</div>
-        </div>
+        <span class="role-pill" style="background:${ps.bg};color:${ps.c}">${POS_LABEL[p.pos]}</span>
+        <span style="font-size:11px;font-weight:700;color:var(--text2)">${fieldAvg(p).toFixed(1)}</span>
+        <div class="ibtn" onclick="openModal(${i})">✏️</div>
+        <div class="ibtn del" onclick="delPlayer(${i})">🗑</div>
       </div>
     </div>`;
   }).join('');
 }
-function toggleImport(){const b=document.getElementById('csv-box');b.style.display=b.style.display==='block'?'none':'block';}
 
-// ── Modal ─────────────────────────────────────────────────────────────
+function toggleImport(){ const b=document.getElementById('csv-box'); b.style.display=b.style.display==='block'?'none':'block'; }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MODAL (Add / Edit player)
+// ─────────────────────────────────────────────────────────────────────────────
+let _currentPos = 'F';
+
+function setPos(pos){
+  _currentPos = pos;
+  ['F','M','B','GK'].forEach(p=>{
+    document.getElementById('pos-'+p.toLowerCase()).classList.toggle('active', p===pos);
+  });
+}
+
 function openModal(idx){
-  editIdx=idx!==undefined?idx:null;
-  const p=editIdx!==null?PLAYERS[editIdx]:{name:'',F:7,M:7,B:7,TP:7,S:7,GK:5,GKW:5};
-  document.getElementById('modal-title').textContent=editIdx!==null?'Edit Player':'Add Player';
-  document.getElementById('f-name').value=p.name;
-  [['sl-f','F','lv-f'],['sl-m','M','lv-m'],['sl-b','B','lv-b'],['sl-tp','TP','lv-tp'],
-   ['sl-st','S','lv-st'],['sl-gk','GK','lv-gk'],['sl-gkw','GKW','lv-gkw']].forEach(([id,k,lv])=>{
-    document.getElementById(id).value=p[k];
-    document.getElementById(lv).textContent=p[k];
+  editIdx = (idx !== undefined) ? idx : null;
+  const p = editIdx !== null ? PLAYERS[editIdx] : {name:'',pos:'F',F:7,M:7,B:7,GK:5,GKW:5,TP:7,S:7};
+  document.getElementById('modal-title').textContent = editIdx!==null ? 'Edit Player' : 'Add Player';
+  document.getElementById('f-name').value = p.name;
+  setPos(p.pos || 'F');
+  [['sl-f','F','lv-f'],['sl-m','M','lv-m'],['sl-b','B','lv-b'],
+   ['sl-gk','GK','lv-gk'],['sl-gkw','GKW','lv-gkw'],
+   ['sl-tp','TP','lv-tp'],['sl-st','S','lv-st']].forEach(([id,k,lv])=>{
+    document.getElementById(id).value = p[k];
+    document.getElementById(lv).textContent = p[k];
   });
   document.getElementById('overlay').classList.add('open');
-  setTimeout(()=>document.getElementById('f-name').focus(),250);
+  setTimeout(()=>document.getElementById('f-name').focus(), 250);
 }
-function closeModal(){document.getElementById('overlay').classList.remove('open');editIdx=null;}
+
+function closeModal(){ document.getElementById('overlay').classList.remove('open'); editIdx=null; }
 
 function savePlayer(){
-  const name=document.getElementById('f-name').value.trim();
-  if(!name){alert('Please enter a player name.');return;}
-  const p={name,
-    F:+document.getElementById('sl-f').value,
-    M:+document.getElementById('sl-m').value,
-    B:+document.getElementById('sl-b').value,
-    TP:+document.getElementById('sl-tp').value,
-    S:+document.getElementById('sl-st').value,
-    GK:+document.getElementById('sl-gk').value,
-    GKW:+document.getElementById('sl-gkw').value,
+  const name = document.getElementById('f-name').value.trim();
+  if(!name){ alert('Please enter a player name.'); return; }
+  const p = {
+    name,
+    pos: _currentPos,
+    F:   +document.getElementById('sl-f').value,
+    M:   +document.getElementById('sl-m').value,
+    B:   +document.getElementById('sl-b').value,
+    GK:  +document.getElementById('sl-gk').value,
+    GKW: +document.getElementById('sl-gkw').value,
+    TP:  +document.getElementById('sl-tp').value,
+    S:   +document.getElementById('sl-st').value,
   };
-  if(editIdx!==null){PLAYERS[editIdx]=p;selected.delete(editIdx);}
+  if(editIdx !== null){ PLAYERS[editIdx]=p; selected.delete(editIdx); }
   else PLAYERS.push(p);
-  closeModal();save();renderList();renderRoster();
+  closeModal(); save(); renderList(); renderRoster();
 }
 
 function delPlayer(i){
-  if(!confirm(`Remove ${PLAYERS[i].name}?`))return;
+  if(!confirm(`Remove ${PLAYERS[i].name}?`)) return;
   PLAYERS.splice(i,1);
-  const ns=new Set();selected.forEach(s=>{if(s<i)ns.add(s);else if(s>i)ns.add(s-1);});
-  selected=ns;save();renderList();renderRoster();
+  const ns=new Set(); selected.forEach(s=>{ if(s<i) ns.add(s); else if(s>i) ns.add(s-1); });
+  selected=ns; save(); renderList(); renderRoster();
 }
 
-// ── GitHub CSV Sync ───────────────────────────────────────────────────
-const GH_KEY='soccerGhConfig_v1';
+// ─────────────────────────────────────────────────────────────────────────────
+// PERSISTENCE (localStorage)
+// ─────────────────────────────────────────────────────────────────────────────
+function save(){
+  try{ localStorage.setItem(KEY, JSON.stringify(PLAYERS)); flashSaved(); }catch(e){}
+}
 
+function load(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(raw){
+      const arr = JSON.parse(raw);
+      if(Array.isArray(arr) && arr.length){
+        // Migrate old format: isGK → pos='GK', dominant field skill → pos
+        PLAYERS = arr.map(x=>({
+          ...x,
+          pos: x.pos || (x.isGK ? 'GK' : autoPos(x)),
+          S:   x.S ?? x.STA ?? 7,
+          GK:  x.GK  ?? 5,
+          GKW: x.GKW ?? 5,
+        }));
+        return;
+      }
+    }
+  }catch(e){}
+  PLAYERS = DEFAULTS.map(p=>({...p}));
+}
+
+// Infer position from highest field skill (used for migration only)
+function autoPos(p){
+  return Object.entries({F:p.F||0, M:p.M||0, B:p.B||0}).sort((a,b)=>b[1]-a[1])[0][0];
+}
+
+function resetRoster(){
+  if(!confirm('Reset to the built-in default roster? All local changes will be lost.')) return;
+  localStorage.removeItem(KEY); location.reload();
+}
+
+function flashSaved(){
+  const b=document.getElementById('saved-badge');
+  b.style.opacity='1'; clearTimeout(b._t);
+  b._t = setTimeout(()=>b.style.opacity='0', 2000);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CSV  (export / import / GitHub sync)
+// ─────────────────────────────────────────────────────────────────────────────
+function exportCSV(){
+  let csv='Name,Position,Forward,Midfield,Defense,GK_Skill,GK_Willingness,TeamPlayer,Stamina\n';
+  PLAYERS.forEach(p=>{
+    csv+=`${p.name},${p.pos},${p.F},${p.M},${p.B},${p.GK},${p.GKW},${p.TP},${p.S}\n`;
+  });
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='roster.csv'; a.click();
+}
+
+function parseCSVText(raw){
+  const lines = raw.split('\n').filter(l=>l.trim());
+  if(!lines.length) return [];
+  // Detect if first row is a header
+  const firstLower = lines[0].toLowerCase();
+  const hasHeader = firstLower.includes('name') || firstLower.includes('position') || firstLower.includes('forward');
+  const start = hasHeader ? 1 : 0;
+  const players = [];
+  lines.slice(start).forEach(line=>{
+    const c = line.split(',').map(x=>x.trim());
+    if(!c[0]) return;
+    // Support both new format (with Position col) and old format (without)
+    let pos, F, M, B, GK, GKW, TP, S;
+    const posRaw = c[1] ? c[1].toUpperCase() : '';
+    if(['F','M','B','GK'].includes(posRaw)){
+      // New format: Name,Position,F,M,B,GK,GKW,TP,S
+      pos=posRaw; F=+c[2]||5; M=+c[3]||5; B=+c[4]||5;
+      GK=+c[5]||5; GKW=+c[6]||5; TP=+c[7]||5; S=+c[8]||5;
+    } else {
+      // Old format: Name,F,M,B,TP,S,GK,GKW[,isGK]
+      F=+c[1]||5; M=+c[2]||5; B=+c[3]||5;
+      TP=+c[4]||5; S=+c[5]||5; GK=+c[6]||5; GKW=+c[7]||5;
+      const isGKval=(c[8]||'').toLowerCase();
+      pos = (isGKval==='true'||isGKval==='1'||isGKval==='yes') ? 'GK' : autoPos({F,M,B});
+    }
+    players.push({name:c[0],pos,F,M,B,GK,GKW,TP:TP||5,S:S||5});
+  });
+  return players;
+}
+
+function importCSV(){
+  const raw = document.getElementById('csv-paste').value.trim();
+  if(!raw) return;
+  const players = parseCSVText(raw);
+  if(!players.length){ alert('No valid rows found.\nExpected: Name,Position,F,M,B,GK,GKW,TP,Stamina'); return; }
+  const replace = confirm(`Import ${players.length} players.\nOK = Replace roster · Cancel = Append`);
+  if(replace){ PLAYERS=players; selected=new Set(); teamAssign={}; }
+  else PLAYERS.push(...players);
+  document.getElementById('csv-paste').value='';
+  document.getElementById('csv-box').style.display='none';
+  save(); renderList(); renderRoster();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GITHUB SYNC
+// ─────────────────────────────────────────────────────────────────────────────
 function saveGhConfig(){
-  const cfg=getGhConfig();
-  try{localStorage.setItem(GH_KEY,JSON.stringify(cfg));}catch(e){}
+  try{ localStorage.setItem(GH_KEY, JSON.stringify(getGhConfig())); }catch(e){}
 }
 function getGhConfig(){
   return{
-    user:(document.getElementById('gh-user').value||'').trim(),
-    repo:(document.getElementById('gh-repo').value||'').trim(),
-    branch:(document.getElementById('gh-branch').value||'main').trim()||'main',
-    path:(document.getElementById('gh-path').value||'roster.csv').trim()||'roster.csv',
+    user:   (document.getElementById('gh-user').value  ||'').trim(),
+    repo:   (document.getElementById('gh-repo').value  ||'').trim(),
+    branch: (document.getElementById('gh-branch').value||'main').trim()||'main',
+    path:   (document.getElementById('gh-path').value  ||'roster.csv').trim()||'roster.csv',
   };
 }
 function loadGhConfig(){
   try{
     const r=localStorage.getItem(GH_KEY);
     if(r){
-      const cfg=JSON.parse(r);
-      document.getElementById('gh-user').value=cfg.user||'';
-      document.getElementById('gh-repo').value=cfg.repo||'';
-      document.getElementById('gh-branch').value=cfg.branch||'main';
-      document.getElementById('gh-path').value=cfg.path||'roster.csv';
+      const c=JSON.parse(r);
+      document.getElementById('gh-user').value  = c.user   || '';
+      document.getElementById('gh-repo').value  = c.repo   || '';
+      document.getElementById('gh-branch').value= c.branch || 'main';
+      document.getElementById('gh-path').value  = c.path   || 'roster.csv';
     }
   }catch(e){}
 }
-function ghStatusMsg(msg,isErr){
+
+function ghStatus(msg, isErr){
   const el=document.getElementById('gh-status');
-  if(!el)return;
   el.style.display='block';
-  el.style.background=isErr?'var(--red-light)':'var(--green-light)';
-  el.style.border='1px solid '+(isErr?'#f5c6c2':'#a8d5b8');
-  el.style.color=isErr?'var(--red)':'var(--green-dark)';
-  el.style.padding='10px 13px';
-  el.style.borderRadius='var(--r-sm)';
-  el.style.fontSize='13px';
-  el.textContent=msg;
+  el.style.background = isErr ? 'var(--red-light)' : 'var(--green-light)';
+  el.style.border = '1px solid '+(isErr?'#f5c6c2':'#a8d5b8');
+  el.style.color  = isErr ? 'var(--red)' : 'var(--green-dark)';
+  el.textContent  = msg;
 }
+
 async function syncFromGitHub(){
   const cfg=getGhConfig();
   const btn=document.getElementById('sync-btn');
   const sub=document.getElementById('hdr-sub');
   if(!cfg.user||!cfg.repo){
     showTab('settings');
-    ghStatusMsg('⚠ Enter your GitHub username and repository name first.',true);
+    ghStatus('⚠ Enter GitHub username and repository name first.', true);
     return;
   }
   const url=`https://raw.githubusercontent.com/${cfg.user}/${cfg.repo}/${cfg.branch}/${cfg.path}?_=${Date.now()}`;
-  if(btn){btn.textContent='⟳…';btn.disabled=true;}
-  sub.textContent='Syncing roster…';
+  btn.textContent='⟳…'; btn.disabled=true;
+  sub.textContent='Syncing…';
   try{
     const res=await fetch(url);
-    if(!res.ok)throw new Error(`HTTP ${res.status} — check username, repo, and file path in Settings`);
-    const text=await res.text();
-    const players=parseCSVText(text);
-    if(!players.length)throw new Error('CSV has 0 valid rows — check file format.');
-    PLAYERS=players;
-    selected=new Set();teamAssign={};
-    try{localStorage.setItem(KEY,JSON.stringify(PLAYERS));}catch(e){}
-    sub.textContent=`✓ ${PLAYERS.length} players · from GitHub`;
-    ghStatusMsg(`✓ Loaded ${PLAYERS.length} players from ${cfg.user}/${cfg.repo}/${cfg.path}`,false);
-    renderList();renderRoster();
+    if(!res.ok) throw new Error(`HTTP ${res.status} — check Settings (username, repo, path)`);
+    const players=parseCSVText(await res.text());
+    if(!players.length) throw new Error('CSV has 0 valid players — check file format.');
+    PLAYERS=players; selected=new Set(); teamAssign={};
+    try{ localStorage.setItem(KEY, JSON.stringify(PLAYERS)); }catch(e){}
+    sub.textContent=`✓ ${PLAYERS.length} players from GitHub`;
+    ghStatus(`✓ Loaded ${PLAYERS.length} players from ${cfg.user}/${cfg.repo}`, false);
+    renderList(); renderRoster();
     document.getElementById('nb-roster').textContent=PLAYERS.length;
   }catch(err){
-    sub.textContent='⚠ Sync failed · using local data';
-    ghStatusMsg('✗ '+err.message,true);
+    sub.textContent='⚠ Sync failed — using local data';
+    ghStatus('✗ '+err.message, true);
   }finally{
-    if(btn){btn.textContent='↻ Sync';btn.disabled=false;}
+    btn.textContent='↻ Sync'; btn.disabled=false;
   }
 }
 
-function parseCSVText(raw){
-  const lines=raw.split('\n').filter(l=>l.trim());
-  if(!lines.length)return[];
-  const start=lines[0].toLowerCase().includes('name')?1:0;
-  const players=[];
-  lines.slice(start).forEach(line=>{
-    const c=line.split(',').map(x=>x.trim());
-    if(c.length<6||!c[0])return;
-    players.push({name:c[0],F:+c[1]||5,M:+c[2]||5,B:+c[3]||5,TP:+c[4]||5,S:+c[5]||5,GK:+c[6]||5,GKW:+c[7]||5});
-  });
-  return players;
-}
-
-// ── Persistence ───────────────────────────────────────────────────────
-function save(){
-  try{localStorage.setItem(KEY,JSON.stringify(PLAYERS));flashSaved();}catch(e){}
-}
-function load(){
-  try{
-    const r=localStorage.getItem(KEY);
-    if(r){const p=JSON.parse(r);if(Array.isArray(p)&&p.length){
-      PLAYERS=p.map(x=>({...x,S:x.S??x.STA??7,GK:x.GK??5,GKW:x.GKW??5}));return;
-    }}
-  }catch(e){}
-  PLAYERS=DEFAULTS.map(p=>({...p}));
-}
-function resetRoster(){
-  if(!confirm('Reset to the built-in default roster? All local edits will be lost.'))return;
-  localStorage.removeItem(KEY);location.reload();
-}
-function flashSaved(){
-  const b=document.getElementById('saved-badge');
-  b.style.opacity='1';clearTimeout(b._t);
-  b._t=setTimeout(()=>b.style.opacity='0',2000);
-}
-
-// ── CSV export / import ───────────────────────────────────────────────
-function exportCSV(){
-  let csv='Name,Forward,Midfield,Defense,TeamPlayer,Stamina,GK_Skill,GK_Willingness\n';
-  PLAYERS.forEach(p=>{csv+=`${p.name},${p.F},${p.M},${p.B},${p.TP},${p.S},${p.GK},${p.GKW}\n`;});
-  const a=document.createElement('a');
-  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
-  a.download='roster.csv';a.click();
-}
-function importCSV(){
-  const raw=document.getElementById('csv-paste').value.trim();
-  if(!raw)return;
-  const players=parseCSVText(raw);
-  if(!players.length){alert('No valid rows found. Expected format:\nName,Forward,Midfield,Defense,TeamPlayer,Stamina,GK_Skill,GK_Willingness');return;}
-  const replace=confirm(`Import ${players.length} players.\n\nOK = Replace entire roster\nCancel = Append to current roster`);
-  if(replace){PLAYERS=players;selected=new Set();teamAssign={};}
-  else PLAYERS.push(...players);
-  document.getElementById('csv-paste').value='';
-  document.getElementById('csv-box').style.display='none';
-  save();renderList();renderRoster();
-}
-function toggleImport(){const b=document.getElementById('csv-box');b.style.display=b.style.display==='block'?'none':'block';}
-
-// ── Init ──────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────────────────────────────────────
 load();
-loadWeights();
 loadGhConfig();
-document.getElementById('nb-roster').textContent=PLAYERS.length;
-applyWeightsToUI();
+document.getElementById('nb-roster').textContent = PLAYERS.length;
 renderList();
 
-// Auto-sync from GitHub on load if configured
-(async()=>{
-  const cfg=getGhConfig();
-  if(cfg.user&&cfg.repo)await syncFromGitHub();
-})();
-
+// Auto-sync from GitHub if configured
+(async()=>{ const c=getGhConfig(); if(c.user&&c.repo) await syncFromGitHub(); })();
 </script>
 </body>
 </html>
