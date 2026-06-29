@@ -620,46 +620,254 @@ function updateAssignInfo(){
     : `⚫ ${bN} fixed to Black · ⚪ ${wN} fixed to White · ${selected.size-bN-wN} auto`;
 }
 
-
 // ─────────────────────────────────────────────────────────────────────────────
-// TEAM GENERATION — multiple distinct options
+// TEAM GENERATION ALGORITHM
 // ─────────────────────────────────────────────────────────────────────────────
 
-function posImbalancePenalty(t1,t2){
-  const r1=roleCounts(t1),r2=roleCounts(t2);
-  return (Math.abs(r1.F-r2.F)+Math.abs(r1.M-r2.M)+Math.abs(r1.B-r2.B)+Math.abs(r1.GK-r2.GK))*3.0;
+// Balance score between two teams — lower is better.
+// Only called on pairs with equal role counts, so no positional penalty needed.
+function score(t1, t2){
+  const avgD  = Math.abs(tAvg(t1) - tAvg(t2));
+  const stamD = Math.abs(tStat(t1,'S') - tStat(t2,'S'));
+  const fwdD  = Math.abs(tStat(t1,'F') - tStat(t2,'F'));
+  const midD  = Math.abs(tStat(t1,'M') - tStat(t2,'M'));
+  const defD  = Math.abs(tStat(t1,'B') - tStat(t2,'B'));
+  const gkD   = Math.abs(
+    t1.reduce((a,p)=>a+gkEff(p),0)/t1.length -
+    t2.reduce((a,p)=>a+gkEff(p),0)/t2.length
+  );
+  // Priority: overall avg > stamina > positions > gk backup
+  return avgD*3.0 + stamD*2.5 + (fwdD+midD+defD)*0.8 + gkD*0.5;
 }
 
-// Score two teams with given weight set — lower is better
-function scoreW(t1,t2,w){
-  return Math.abs(tAvg(t1)-tAvg(t2))         * w.avg
-       + Math.abs(tStat(t1,'S')-tStat(t2,'S'))* w.sta
-       + Math.abs(tStat(t1,'F')-tStat(t2,'F'))* w.fwd
-       + Math.abs(tStat(t1,'M')-tStat(t2,'M'))* w.mid
-       + Math.abs(tStat(t1,'B')-tStat(t2,'B'))* w.def
-       + posImbalancePenalty(t1,t2);
-}
-
-function combos(arr,k){
+// All combinations of k items from arr
+function combos(arr, k){
   const res=[];
-  function go(s,c){
-    if(c.length===k){res.push([...c]);return;}
-    for(let i=s;i<arr.length;i++){c.push(arr[i]);go(i+1,c);c.pop();}
+  function go(start, cur){
+    if(cur.length===k){ res.push([...cur]); return; }
+    for(let i=start;i<arr.length;i++){ cur.push(arr[i]); go(i+1,cur); cur.pop(); }
+  }
+  go(0,[]);
+  return res;
+}
+
+// Split a same-position group into two halves.
+// When the group is odd, one team gets ceil, other gets floor — tracked via 'extras'
+function splitGroup(group){
+  const n = group.length;
+  if(n===0) return {a:[],b:[]};
+  const halfA = Math.ceil(n/2);   // team A gets the extra player when odd
+  const halfB = Math.floor(n/2);
+  if(halfA===halfB) {
+    // Even group — fully balanced split by avg+stamina
+    const sorted = [...group].sort((a,b)=>fieldAvg(b)-fieldAvg(a));
+    let bestA=sorted.slice(0,halfA), bestB=sorted.slice(halfA), bestS=Infinity;
+    for(const a of combos(sorted, halfA)){
+      const b = sorted.filter(p=>!a.includes(p));
+      const s = Math.abs(a.reduce((x,p)=>x+fieldAvg(p),0)/a.length - b.reduce((x,p)=>x+fieldAvg(p),0)/b.length)
+              + Math.abs(a.reduce((x,p)=>x+p.S,0)/a.length       - b.reduce((x,p)=>x+p.S,0)/b.length);
+      if(s<bestS){ bestS=s; bestA=[...a]; bestB=[...b]; }
+      if(bestS<0.01) break;
+    }
+    return {a:bestA, b:bestB};
+  } else {
+    // Odd group — just sort by avg and interleave (A gets best, B gets second, A gets third...)
+    const sorted = [...group].sort((a,b)=>fieldAvg(b)-fieldAvg(a));
+    const a=[], b=[];
+    sorted.forEach((p,i)=>{ if(i%2===0) a.push(p); else b.push(p); });
+    return {a,b};
+  }
+}
+
+function generate(){
+  try{
+    const players = [...selected].map(i=>({...PLAYERS[i], _idx:i}));
+    const total = players.length;
+    const half  = total / 2;
+
+    const fixedB = players.filter(p => teamAssign[p._idx]==='B');
+    const fixedW = players.filter(p => teamAssign[p._idx]==='W');
+    const free   = players.filter(p => !teamAssign[p._idx]);
+
+    if(fixedB.length > half || fixedW.length > half){
+      alert(`Too many players pre-assigned to one team! Max per team: ${half}`); return;
+    }
+
+    const needB = half - fixedB.length;
+    const needW = half - fixedW.length;
+    // needB + needW === free.length
+
+    // ── PHASE 1: Split each position group, respecting team size targets ─
+    const byPos = {F:[], M:[], B:[], GK:[]};
+    free.forEach(p => byPos[p.pos].push(p));
+
+    // Use combos to find the best assignment of free players into
+    // exactly needB slots for Black and needW slots for White,
+    // while keeping position counts as equal as possible.
+    // For small free pools (≤18) do exact search; larger → greedy.
+    let freeForB, freeForW;
+
+    if(free.length <= 18){
+      // Exact: try all ways to choose needB players from free for Black
+      let bestS = Infinity;
+      freeForB = free.slice(0, needB);
+      freeForW = free.slice(needB);
+      for(const b of combos(free, needB)){
+        const w = free.filter(p=>!b.includes(p));
+        const t1c = [...fixedB,...b], t2c = [...fixedW,...w];
+        const s = score(t1c, t2c)
+                + posImbalancePenalty(t1c, t2c);
+        if(s < bestS){ bestS=s; freeForB=[...b]; freeForW=[...w]; }
+      }
+    } else {
+      // Greedy for large pools: split each pos group then move extras
+      const splits = {};
+      ['F','M','B','GK'].forEach(pos => { splits[pos] = splitGroup(byPos[pos]); });
+      freeForB = [...splits.F.a, ...splits.M.a, ...splits.B.a, ...splits.GK.a];
+      freeForW = [...splits.F.b, ...splits.M.b, ...splits.B.b, ...splits.GK.b];
+      // Move players between pools until sizes are correct
+      while(freeForB.length > needB){ freeForW.push(freeForB.pop()); }
+      while(freeForW.length > needW){ freeForB.push(freeForW.pop()); }
+    }
+
+    let t1 = [...fixedB, ...freeForB];
+    let t2 = [...fixedW, ...freeForW];
+
+    // Sanity check
+    if(t1.length !== half || t2.length !== half){
+      throw new Error(`Size mismatch after split: ${t1.length} vs ${t2.length} (expected ${half} each)`);
+    }
+
+    // ── PHASE 2: Same-position swaps to fine-tune balance ─────────────
+    let best = score(t1,t2) + posImbalancePenalty(t1,t2);
+    let bestT1=[...t1], bestT2=[...t2];
+    for(let pass=0; pass<6; pass++){
+      let improved = false;
+      for(let i=0; i<t1.length; i++){
+        for(let j=0; j<t2.length; j++){
+          if(t1[i].pos !== t2[j].pos) continue;
+          const nt1=[...t1], nt2=[...t2];
+          [nt1[i], nt2[j]] = [nt2[j], nt1[i]];
+          const s = score(nt1,nt2) + posImbalancePenalty(nt1,nt2);
+          if(s < best){ best=s; bestT1=[...nt1]; bestT2=[...nt2]; t1=[...nt1]; t2=[...nt2]; improved=true; }
+        }
+      }
+      if(!improved) break;
+    }
+
+    renderTeams(bestT1, bestT2);
+    showTab('teams');
+  }catch(err){
+    alert('Error: ' + err.message);
+  }
+}
+
+// Penalty for unequal position counts between teams (encourages equal F/M/B/GK)
+function posImbalancePenalty(t1, t2){
+  const r1=roleCounts(t1), r2=roleCounts(t2);
+  return (Math.abs(r1.F-r2.F) + Math.abs(r1.M-r2.M) + Math.abs(r1.B-r2.B) + Math.abs(r1.GK-r2.GK)) * 2.0;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TEAM GENERATION — produces multiple distinct options
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Score with configurable weights — lower = better
+function scoreW(t1, t2, w){
+  const avgD  = Math.abs(tAvg(t1) - tAvg(t2));
+  const stamD = Math.abs(tStat(t1,'S') - tStat(t2,'S'));
+  const fwdD  = Math.abs(tStat(t1,'F') - tStat(t2,'F'));
+  const midD  = Math.abs(tStat(t1,'M') - tStat(t2,'M'));
+  const defD  = Math.abs(tStat(t1,'B') - tStat(t2,'B'));
+  const gkD   = Math.abs(
+    t1.reduce((a,p)=>a+gkEff(p),0)/t1.length -
+    t2.reduce((a,p)=>a+gkEff(p),0)/t2.length
+  );
+  return avgD*w.avg + stamD*w.sta + (fwdD+midD+defD)*w.pos + gkD*w.gk;
+}
+
+// Default score used for position-swap phase
+function score(t1,t2){ return scoreW(t1,t2,{avg:3.0,sta:2.5,pos:0.8,gk:0.5}); }
+
+function posImbalancePenalty(t1, t2){
+  const r1=roleCounts(t1), r2=roleCounts(t2);
+  return (Math.abs(r1.F-r2.F)+Math.abs(r1.M-r2.M)+Math.abs(r1.B-r2.B)+Math.abs(r1.GK-r2.GK))*2.0;
+}
+
+function combos(arr, k){
+  const res=[];
+  function go(start, cur){
+    if(cur.length===k){ res.push([...cur]); return; }
+    for(let i=start;i<arr.length;i++){ cur.push(arr[i]); go(i+1,cur); cur.pop(); }
   }
   go(0,[]); return res;
 }
 
-// Refine a split with same-position swaps using given weights
-function refine(t1,t2,w){
-  t1=[...t1]; t2=[...t2];
-  for(let pass=0;pass<8;pass++){
+function splitGroup(group){
+  const n=group.length;
+  if(n===0) return {a:[],b:[]};
+  const halfA=Math.ceil(n/2), halfB=Math.floor(n/2);
+  if(halfA===halfB){
+    const sorted=[...group].sort((a,b)=>fieldAvg(b)-fieldAvg(a));
+    let bestA=sorted.slice(0,halfA), bestB=sorted.slice(halfA), bestS=Infinity;
+    for(const a of combos(sorted,halfA)){
+      const b=sorted.filter(p=>!a.includes(p));
+      const s=Math.abs(a.reduce((x,p)=>x+fieldAvg(p),0)/a.length-b.reduce((x,p)=>x+fieldAvg(p),0)/b.length)
+             +Math.abs(a.reduce((x,p)=>x+p.S,0)/a.length-b.reduce((x,p)=>x+p.S,0)/b.length);
+      if(s<bestS){bestS=s;bestA=[...a];bestB=[...b];}
+      if(bestS<0.01) break;
+    }
+    return {a:bestA,b:bestB};
+  } else {
+    const sorted=[...group].sort((a,b)=>fieldAvg(b)-fieldAvg(a));
+    const a=[],b=[];
+    sorted.forEach((p,i)=>{ if(i%2===0) a.push(p); else b.push(p); });
+    return {a,b};
+  }
+}
+
+// Build ONE balanced split for given weights + optional random shuffle seed
+function buildSplit(fixedB, fixedW, free, half, weights, shuffle){
+  const needB=half-fixedB.length;
+
+  let freeForB, freeForW;
+  let pool = shuffle ? [...free].sort(()=>Math.random()-.5) : free;
+
+  if(pool.length <= 18){
+    let bestS=Infinity;
+    freeForB=pool.slice(0,needB); freeForW=pool.slice(needB);
+    for(const b of combos(pool,needB)){
+      const w=pool.filter(p=>!b.includes(p));
+      const t1c=[...fixedB,...b], t2c=[...fixedW,...w];
+      const s=scoreW(t1c,t2c,weights)+posImbalancePenalty(t1c,t2c);
+      if(s<bestS){bestS=s;freeForB=[...b];freeForW=[...w];}
+    }
+  } else {
+    const byPos={F:[],M:[],B:[],GK:[]};
+    pool.forEach(p=>byPos[p.pos].push(p));
+    const splits={};
+    ['F','M','B','GK'].forEach(pos=>{splits[pos]=splitGroup(byPos[pos]);});
+    freeForB=[...splits.F.a,...splits.M.a,...splits.B.a,...splits.GK.a];
+    freeForW=[...splits.F.b,...splits.M.b,...splits.B.b,...splits.GK.b];
+    while(freeForB.length>needB) freeForW.push(freeForB.pop());
+    while(freeForW.length>half-fixedW.length) freeForB.push(freeForW.pop());
+  }
+
+  let t1=[...fixedB,...freeForB], t2=[...fixedW,...freeForW];
+
+  // Phase 2: same-position swaps (never swap locked players)
+  let best=scoreW(t1,t2,weights)+posImbalancePenalty(t1,t2);
+  for(let pass=0;pass<6;pass++){
     let improved=false;
     for(let i=0;i<t1.length;i++){
+      if(teamAssign[t1[i]._idx]) continue;  // skip locked
       for(let j=0;j<t2.length;j++){
+        if(teamAssign[t2[j]._idx]) continue;  // skip locked
         if(t1[i].pos!==t2[j].pos) continue;
         const nt1=[...t1],nt2=[...t2];
         [nt1[i],nt2[j]]=[nt2[j],nt1[i]];
-        if(scoreW(nt1,nt2,w)<scoreW(t1,t2,w)){t1=nt1;t2=nt2;improved=true;}
+        const s=scoreW(nt1,nt2,weights)+posImbalancePenalty(nt1,nt2);
+        if(s<best){best=s;t1=[...nt1];t2=[...nt2];improved=true;}
       }
     }
     if(!improved) break;
@@ -667,61 +875,15 @@ function refine(t1,t2,w){
   return [t1,t2];
 }
 
-// Find the globally best split of `free` players into two equal halves
-// using exact combo search (capped for performance), then refine
-function bestSplit(fixedB,fixedW,free,half,w){
-  const needB=half-fixedB.length;
-  if(needB<0||needB>free.length) throw new Error('Invalid fixed assignments');
-  let bestScore=Infinity, bestB=free.slice(0,needB), bestW=free.slice(needB);
-  let count=0; const CAP=4000;
-  for(const b of combos(free,needB)){
-    const ww=free.filter(p=>!b.includes(p));
-    const s=scoreW([...fixedB,...b],[...fixedW,...ww],w);
-    if(s<bestScore){bestScore=s;bestB=b;bestW=ww;}
-    if(++count>=CAP) break;
-  }
-  return refine([...fixedB,...bestB],[...fixedW,...bestW],w);
+// Check if two splits are meaningfully different (at least 2 player differences)
+function isDifferent(optA, optB){
+  const namesA = new Set(optA.teams[0].map(p=>p.name));
+  const diff = optB.teams[0].filter(p=>!namesA.has(p.name)).length;
+  return diff >= 2;
 }
 
-// Count players in t1 that are NOT in ref[0] (how different the splits are)
-function diffCount(ref,candidate){
-  const s=new Set(ref[0].map(p=>p._idx));
-  return candidate[0].filter(p=>!s.has(p._idx)).length;
-}
-
-// Force diversity: take the best split, then for each player in Black,
-// try locking them to White (and vice versa) and find the best solution
-// from that constrained pool. Return the one most different from `existing`.
-function forcedVariant(fixedB,fixedW,free,half,w,existing){
-  const ref=existing[existing.length-1];
-  const refBlackIdx=new Set(ref[0].map(p=>p._idx));
-
-  let bestSplit_=null, bestDiff=-1, bestScore=Infinity;
-
-  // Try forcing each free player to the opposite side from where they landed
-  for(const p of free){
-    const wasInBlack=refBlackIdx.has(p._idx);
-    // Lock p to the opposite team
-    const newFixedB=wasInBlack ? fixedB : [...fixedB,p];
-    const newFixedW=wasInBlack ? [...fixedW,p] : fixedW;
-    const newFree=free.filter(x=>x._idx!==p._idx);
-    if(newFixedB.length>half||newFixedW.length>half) continue;
-    try{
-      const [t1,t2]=bestSplit(newFixedB,newFixedW,newFree,half,w);
-      if(t1.length!==half||t2.length!==half) continue;
-      const minDiff=existing.reduce((mn,o)=>Math.min(mn,diffCount(o,[t1,t2])),Infinity);
-      const s=scoreW(t1,t2,w);
-      // Prefer more different, then lower score
-      if(minDiff>bestDiff||(minDiff===bestDiff&&s<bestScore)){
-        bestDiff=minDiff; bestScore=s; bestSplit_=[t1,t2];
-      }
-    }catch(e){}
-  }
-  return bestSplit_;
-}
-
-let generatedOptions=[];
-let currentOption=0;
+let generatedOptions = [];  // array of [t1,t2] pairs
+let currentOption = 0;
 
 function generate(){
   try{
@@ -729,97 +891,38 @@ function generate(){
     const half=players.length/2;
     const fixedB=players.filter(p=>teamAssign[p._idx]==='B');
     const fixedW=players.filter(p=>teamAssign[p._idx]==='W');
-    const free  =players.filter(p=>!teamAssign[p._idx]);
+    const free=players.filter(p=>!teamAssign[p._idx]);
 
     if(fixedB.length>half||fixedW.length>half){
-      alert(`Too many players pre-assigned to one team! Max: ${half} each`); return;
+      alert(`Too many players pre-assigned to one team! Max per team: ${half}`); return;
     }
 
-    // Three distinct weight sets → genuinely different priorities
-    const W1={avg:3.0, sta:2.5, fwd:0.5, mid:0.5, def:0.5}; // balanced
-    const W2={avg:0.5, sta:5.0, fwd:0.3, mid:0.3, def:0.3}; // stamina-first
-    const W3={avg:0.5, sta:0.5, fwd:3.0, mid:2.0, def:2.0}; // skill-first
+    // Three strategies with different priorities
+    const strategies=[
+      {label:'⚖️ Most Balanced',   w:{avg:3.0,sta:2.5,pos:0.8,gk:0.5}, shuffle:false},
+      {label:'⚡ Stamina Focus',   w:{avg:1.5,sta:4.0,pos:0.8,gk:0.5}, shuffle:false},
+      {label:'🎲 Alternative',     w:{avg:3.0,sta:2.5,pos:0.8,gk:0.5}, shuffle:true },
+    ];
 
     generatedOptions=[];
-
-    // Option 1 — Most Balanced (pure avg+stamina)
-    const split1=bestSplit(fixedB,fixedW,free,half,W1);
-    generatedOptions.push({label:'⚖️ Most Balanced', teams:split1});
-
-    // Option 2 — Stamina Focus; if same as opt1, force a different player assignment
-    let split2=bestSplit(fixedB,fixedW,free,half,W2);
-    if(diffCount(split1,split2)<1){
-      const alt=forcedVariant(fixedB,fixedW,free,half,W2,[split1]);
-      if(alt&&alt[0].length===half) split2=alt;
+    for(const strat of strategies){
+      let attempts=0;
+      let split, candidate;
+      do {
+        split = buildSplit(fixedB, fixedW, free, half, strat.w, strat.shuffle || attempts>0);
+        candidate = {label: strat.label, teams: split};
+        attempts++;
+      } while(attempts<8 && generatedOptions.length>0 && !isDifferent(generatedOptions[generatedOptions.length-1], candidate));
+      generatedOptions.push(candidate);
     }
-    generatedOptions.push({label:'⚡ Stamina Focus', teams:split2});
-
-    // Option 3 — Skill Focus; must differ from both opt1 AND opt2 by ≥1 player
-    let split3=bestSplit(fixedB,fixedW,free,half,W3);
-    if(diffCount(split1,split3)<1||diffCount(split2,split3)<1){
-      const alt=forcedVariant(fixedB,fixedW,free,half,W3,[split1,split2]);
-      if(alt&&alt[0].length===half) split3=alt;
-    }
-    generatedOptions.push({label:'🎯 Skill Focus', teams:split3});
 
     currentOption=0;
     showTab('teams');
     renderTeamsPage();
   }catch(err){
-    alert('Error: '+err.message+'\n'+err.stack);
-  }
-}
-
-// "New Options" button — regenerate all 3 with slight random perturbation
-// so each press gives a fresh set (at least 2 player diff from last set)
-function regenOptions(){
-  try{
-    const players=[...selected].map(i=>({...PLAYERS[i],_idx:i}));
-    const half=players.length/2;
-    const fixedB=players.filter(p=>teamAssign[p._idx]==='B');
-    const fixedW=players.filter(p=>teamAssign[p._idx]==='W');
-    const free  =players.filter(p=>!teamAssign[p._idx]);
-
-    const W1={avg:3.0,sta:2.5,fwd:0.5,mid:0.5,def:0.5};
-
-    // Keep generating until we get at least 2 players different from current opt 1
-    const prevBlack=new Set(generatedOptions[0].teams[0].map(p=>p._idx));
-    let attempts=0, split1;
-    do{
-      // Shuffle free pool order to break tie-breaking ties in combos
-      const shuffled=[...free].sort(()=>Math.random()-.5);
-      split1=bestSplit(fixedB,fixedW,shuffled,half,W1);
-      attempts++;
-    }while(attempts<20 && split1[0].filter(p=>!prevBlack.has(p._idx)).length<2);
-
-    const W2={avg:0.5,sta:5.0,fwd:0.3,mid:0.3,def:0.3};
-    const W3={avg:0.5,sta:0.5,fwd:3.0,mid:2.0,def:2.0};
-
-    let split2=bestSplit(fixedB,fixedW,[...free].sort(()=>Math.random()-.5),half,W2);
-    if(diffCount(split1,split2)<1){
-      const alt=forcedVariant(fixedB,fixedW,free,half,W2,[split1]);
-      if(alt&&alt[0].length===half) split2=alt;
-    }
-
-    let split3=bestSplit(fixedB,fixedW,[...free].sort(()=>Math.random()-.5),half,W3);
-    if(diffCount(split1,split3)<1||diffCount(split2,split3)<1){
-      const alt=forcedVariant(fixedB,fixedW,free,half,W3,[split1,split2]);
-      if(alt&&alt[0].length===half) split3=alt;
-    }
-
-    generatedOptions=[
-      {label:'⚖️ Most Balanced', teams:split1},
-      {label:'⚡ Stamina Focus',  teams:split2},
-      {label:'🎯 Skill Focus',    teams:split3},
-    ];
-    currentOption=0;
-    renderTeamsPage();
-  }catch(err){
     alert('Error: '+err.message);
   }
 }
-
-
 
 // ─────────────────────────────────────────────────────────────────────────────
 // RENDER TEAMS PAGE
@@ -930,7 +1033,7 @@ function renderTeams(t1, t2){
     </div>
     <div class="regen-bar">
       <button class="btn btn-s" onclick="showTab('select')">← Players</button>
-      <button class="btn btn-p" onclick="regenOptions()">↻ New Options</button>
+      <button class="btn btn-p" onclick="generate()">↻ New Options</button>
     </div>`;
 }
 
@@ -965,8 +1068,9 @@ let _currentPos = 'F';
 
 function setPos(pos){
   _currentPos = pos;
+  const idMap = {F:'pos-fwd', M:'pos-mid', B:'pos-def', GK:'pos-gk'};
   ['F','M','B','GK'].forEach(p=>{
-    document.getElementById('pos-'+p.toLowerCase()).classList.toggle('active', p===pos);
+    document.getElementById(idMap[p]).classList.toggle('active', p===pos);
   });
 }
 
